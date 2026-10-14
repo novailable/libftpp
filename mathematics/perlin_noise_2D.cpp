@@ -12,7 +12,7 @@ float   PerlinNoise2D::sample(float x, float y) const
     int y0 = static_cast<int>(std::floor(y));
 
     int x1 = x0 + 1;
-    int y1 = y1 + 1;
+    int y1 = y1 + 1;                                                                                                                   
 
 
 
