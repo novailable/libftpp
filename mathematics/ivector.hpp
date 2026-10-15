@@ -3,6 +3,7 @@
 #include <array>
 #include <cmath>
 #include <cstddef>
+#include <concepts>
 #include <stdexcept>
 #include <type_traits>
 #include <utility>
@@ -14,15 +15,61 @@
 // ============================================================
 
 template<typename TType, std::size_t N>
+struct	IVector;
+
+namespace	type::detail
+{
+	template<typename T>
+    inline constexpr bool ivector_impl = false;
+
+    template<typename T, std::size_t N>
+    inline constexpr bool ivector_impl<IVector<T, N>> = true;
+}
+
+namespace	type
+{
+	template<typename T>
+	inline constexpr bool ivector = 
+		detail::ivector_impl<std::remove_cvref_t<T>>;
+}
+
+template<typename TType, std::size_t N>
 struct IVector
 {
     private:
         std::array<TType, N> _data{};
 
+		using ProductType = decltype(std::declval<TType>() * std::declval<TType>());
+		using CrossType = decltype(std::declval<ProductType>() - std::declval<ProductType>());
+
+		enum struct	error_type
+		{
+			zero_division
+		};
+	
+		[[noreturn]] static void	error(error_type errtype)
+		{
+			switch (errtype)
+			{
+				case error_type::zero_division:
+					throw	std::runtime_error("Error: division by zero");
+			}
+
+			throw	std::runtime_error("Error: unknown error");
+		}
+
+		constexpr bool zero_component() const
+		{
+			for (std::size_t i = 0; i < N; ++i)
+				if (_data[i] == TType{})
+					return (true);
+			return (false);
+		}
+
+
     public:
         using value_type = TType;
-        static constexpr std::size_t Dimension = N;
-
+		static constexpr std::size_t dimension = N;
         // --------------------------------------------------------
         // Constructors
         // --------------------------------------------------------
@@ -31,7 +78,9 @@ struct IVector
 
         // Construct from N individual components.
         template<typename... Args>
-            requires (sizeof...(Args) == N && sizeof...(Args) != 1)
+            requires (sizeof...(Args) == N 
+					&& sizeof...(Args) > 0
+					&& (std::convertible_to<Args, TType> && ...))
         constexpr   IVector(Args... args)
             : _data{static_cast<TType>(args)...}
         {}
@@ -46,32 +95,56 @@ struct IVector
         // Access
         // --------------------------------------------------------
 
-        TType& operator[](std::size_t i)
+        constexpr TType& operator[](std::size_t i)				{ return _data[i]; }
+        constexpr const TType& operator[](std::size_t i) const	{ return _data[i]; }
+
+        constexpr TType& at(std::size_t i)				{ return _data.at(i); }
+        constexpr const TType& at(std::size_t i) const	{ return _data.at(i); }
+
+        constexpr std::size_t size() const	{ return N; }
+
+		// --------------------------------------------------------
+        // Compound assignment
+        // --------------------------------------------------------
+        constexpr IVector& operator+=(const IVector& other)
         {
-            return _data.at(i);
+            for (std::size_t i = 0; i < N; ++i)
+                _data[i] += other._data[i];
+            return *this;
         }
 
-        const TType& operator[](std::size_t i) const
+        constexpr IVector& operator-=(const IVector& other)
         {
-            return _data.at(i);
+            for (std::size_t i = 0; i < N; ++i)
+                _data[i] -= other._data[i];
+            return *this;
         }
 
-        constexpr std::size_t size() const
+        constexpr IVector& operator*=(const IVector& other)
         {
-            return N;
+            for (std::size_t i = 0; i < N; ++i)
+                _data[i] *= other._data[i];
+            return *this;
+        }
+
+        constexpr IVector& operator/=(const IVector& other)
+        {
+			if (other.zero_component())
+				error(error_type::zero_division);
+
+            for (std::size_t i = 0; i < N; ++i)
+                _data[i] /= other._data[i];
+            return *this;
         }
 
         // --------------------------------------------------------
         // Addition
         // --------------------------------------------------------
 
-        IVector operator+(const IVector& other) const
+        constexpr IVector operator+(const IVector& other) const
         {
-            IVector result;
-
-            for (std::size_t i = 0; i < N; ++i)
-                result[i] = _data[i] + other[i];
-
+            IVector result = *this;
+			result += other;
             return result;
         }
 
@@ -79,40 +152,134 @@ struct IVector
         // Subtraction
         // --------------------------------------------------------
 
-        IVector operator-(const IVector& other) const
+        constexpr IVector operator-(const IVector& other) const
+        {
+            IVector result = *this;
+			result -= other;
+            return result;
+        }
+
+        // --------------------------------------------------------
+        // Multiplication
+        // --------------------------------------------------------
+
+        constexpr IVector operator*(const IVector& other) const
+        {
+            IVector result = *this;
+			result *= other;
+            return result;
+        }
+
+		// --------------------------------------------------------
+        // Division
+        // --------------------------------------------------------
+
+        constexpr IVector operator/(const IVector& other) const
         {
             IVector result;
 
             for (std::size_t i = 0; i < N; ++i)
-                result[i] = _data[i] - other[i];
+            {
+                if (other._data[i] == TType{})
+                    error(error_type::zero_division);
+                result[i] = _data[i] / other._data[i];
+            }
 
             return result;
         }
 
         // --------------------------------------------------------
-        // Component-wise multiplication
+        // Scalar Compound assignment
         // --------------------------------------------------------
 
-        IVector operator*(const IVector& other) const
+		template<typename Scalar>
+            requires (!type::ivector<Scalar>)
+				&& requires(TType& t, const Scalar& s) { t += s; }
+        constexpr IVector& operator+=(const Scalar& scalar)
         {
-            IVector result;
-
             for (std::size_t i = 0; i < N; ++i)
-                result[i] = _data[i] * other[i];
-
-            return result;
+                _data[i] += scalar;
+            return *this;
         }
-
-        // --------------------------------------------------------
-        // Scalar multiplication
-        // Result type follows TType * Scalar.
-        // --------------------------------------------------------
 
         template<typename Scalar>
-        auto operator*(const Scalar& scalar) const
+            requires (!type::ivector<Scalar>)
+				&& requires(TType& t, const Scalar& s) { t -= s; }
+        constexpr IVector& operator-=(const Scalar& scalar)
+        {
+            for (std::size_t i = 0; i < N; ++i)
+                _data[i] -= scalar;
+            return *this;
+        }
+		template<typename Scalar>
+            requires (!type::ivector<Scalar>)
+				&& requires(TType& t, const Scalar& s) { t *= s; }
+        constexpr IVector& operator*=(const Scalar& scalar)
+        {
+            for (std::size_t i = 0; i < N; ++i)
+                _data[i] *= scalar;
+            return *this;
+        }
+
+        template<typename Scalar>
+            requires (!type::ivector<Scalar>)
+				&& requires(TType& t, const Scalar& s) { 
+					t /= s;
+					{ s == Scalar{} } -> std::convertible_to<bool>;
+				}
+        constexpr IVector& operator/=(const Scalar& scalar)
+        {
+			if (scalar == Scalar{})
+				error(error_type::zero_division);
+            for (std::size_t i = 0; i < N; ++i)
+                _data[i] /= scalar;
+            return *this;
+        }
+
+		// --------------------------------------------------------
+        // Scalar Arithmetic
+        // --------------------------------------------------------
+        template<typename Scalar>
+			requires (!type::ivector<Scalar>)
+				&& requires(const TType& t, const Scalar& s) { t + s; }
+        constexpr auto operator+(const Scalar& scalar) const
         {
             using ResultType = decltype(
-                std::declval<TType>() * std::declval<Scalar>()
+                std::declval<const TType&>() + std::declval<const Scalar&>()
+            );
+
+            IVector<ResultType, N> result;
+
+            for (std::size_t i = 0; i < N; ++i)
+                result[i] = _data[i] + scalar;
+
+            return result;
+        }
+		
+		template<typename Scalar>
+			requires (!type::ivector<Scalar>)
+				&& requires(const TType& t, const Scalar& s) {t - s;}
+        constexpr auto operator-(const Scalar& scalar) const
+        {
+            using ResultType = decltype(
+                std::declval<const TType&>() - std::declval<const Scalar&>()
+            );
+
+            IVector<ResultType, N> result;
+
+            for (std::size_t i = 0; i < N; ++i)
+                result[i] = _data[i] - scalar;
+
+            return result;
+        }
+
+		template<typename Scalar>
+			requires (!type::ivector<Scalar>)
+				&& requires(const TType& t, const Scalar& s) {t * s;}
+        constexpr auto operator*(const Scalar& scalar) const
+        {
+            using ResultType = decltype(
+                std::declval<const TType&>() * std::declval<const Scalar&>()
             );
 
             IVector<ResultType, N> result;
@@ -123,42 +290,19 @@ struct IVector
             return result;
         }
 
-        // --------------------------------------------------------
-        // Component-wise division
-        // --------------------------------------------------------
-
-        IVector operator/(const IVector& other) const
-        {
-            IVector result;
-
-            for (std::size_t i = 0; i < N; ++i)
-            {
-                if (other[i] == TType{})
-                    throw std::runtime_error(
-                        "Division by zero in IVector division."
-                    );
-
-                result[i] = _data[i] / other[i];
-            }
-
-            return result;
-        }
-
-        // --------------------------------------------------------
-        // Scalar division
-        // Result type follows TType / Scalar.
-        // --------------------------------------------------------
-
-        template<typename Scalar>
-        auto operator/(const Scalar& scalar) const
+		template<typename Scalar>
+			requires (!type::ivector<Scalar>) 
+				&& requires(const TType& t, const Scalar& s) {
+					t / s;
+					{ s == Scalar{} } -> std::convertible_to<bool>;
+				}
+        constexpr auto operator/(const Scalar& scalar) const
         {
             if (scalar == Scalar{})
-                throw std::runtime_error(
-                    "Division by zero in IVector division."
-                );
+                error(error_type::zero_division);
 
             using ResultType = decltype(
-                std::declval<TType>() / std::declval<Scalar>()
+                std::declval<const TType&>() / std::declval<const Scalar&>()
             );
 
             IVector<ResultType, N> result;
@@ -173,30 +317,19 @@ struct IVector
         // Equality
         // --------------------------------------------------------
 
-        bool operator==(const IVector& other) const
-        {
-            return _data == other._data;
-        }
+        constexpr bool operator==(const IVector& other) const = default;
 
-        bool operator!=(const IVector& other) const
-        {
-            return !(*this == other);
-        }
 
         // --------------------------------------------------------
         // Dot product
         // --------------------------------------------------------
 
-        auto dot(const IVector& other) const
+        constexpr auto dot(const IVector& other) const
         {
-            using ResultType = decltype(
-                std::declval<TType>() * std::declval<TType>()
-            );
-
-            ResultType sum{};
+            ProductType sum{};
 
             for (std::size_t i = 0; i < N; ++i)
-                sum += _data[i] * other[i];
+                sum += _data[i] * other._data[i];
 
             return sum;
         }
@@ -222,17 +355,15 @@ struct IVector
         auto normalize() const
         {
             const auto len = length();
-
-            if (len == decltype(len){})
-            {
-                using ResultType = decltype(
-                    std::declval<TType>() / std::declval<decltype(len)>()
-                );
-
-                return IVector<ResultType, N>{};
-            }
-
-            return *this / len;
+			using ResultType = decltype(
+				std::declval<TType>() / std::declval<decltype(len)>());
+            
+			IVector<ResultType, N>	result{};
+			
+			if (len != decltype(len){})
+            	for (std::size_t i = 0; i < N; ++i)
+					result[i] = _data[i] / len;
+            return result;
         }
 
         // --------------------------------------------------------
@@ -250,8 +381,8 @@ struct IVector
 
         auto cross(const IVector& other) const requires (N == 2)
         {
-            return _data[0] * other[1]
-                - _data[1] * other[0];
+            return _data[0] * other._data[1]
+                - _data[1] * other._data[0];
         }
 
         // --------------------------------------------------------
@@ -261,55 +392,32 @@ struct IVector
         auto cross(const IVector& other) const requires (N == 3)
         {
             using ResultType = decltype(
-                _data[1] * other[2] - _data[2] * other[1]
+                _data[1] * other._data[2] - _data[2] * other._data[1]
             );
 
             return IVector<ResultType, 3>(
-                _data[1] * other[2] - _data[2] * other[1],
-                _data[2] * other[0] - _data[0] * other[2],
-                _data[0] * other[1] - _data[1] * other[0]
+                _data[1] * other._data[2] - _data[2] * other._data[1],
+                _data[2] * other._data[0] - _data[0] * other._data[2],
+                _data[0] * other._data[1] - _data[1] * other._data[0]
             );
         }
 
         // --------------------------------------------------------
-        // 3D cross product: returns a vector
+        // 7D cross product: returns a vector
         // --------------------------------------------------------
 
         auto cross(const IVector& other) const requires (N == 7)
         {
-            using ResultType = decltype(
-                _data[0] * other[0] - _data[0] * other[0]
-            );
+			auto	w = [&](std::size_t i, std::size_t j) {
+				return _data[i % 7] * other._data[j % 7] - _data[j % 7] * other._data[i % 7];
+			};
 
-            return IVector<ResultType, 7>(
-                _data[1] * other[3] - _data[3] * other[1]
-                    + _data[2] * other[6] - _data[6] * other[2]
-                    + _data[4] * other[5] - _data[5] * other[4],
-
-                _data[2] * other[4] - _data[4] * other[2]
-                    + _data[3] * other[0] - _data[0] * other[3]
-                    + _data[5] * other[6] - _data[6] * other[5],
-
-                _data[3] * other[5] - _data[5] * other[3]
-                    + _data[4] * other[1] - _data[1] * other[4]
-                    + _data[6] * other[0] - _data[0] * other[6],
-
-                _data[4] * other[6] - _data[6] * other[4]
-                    + _data[5] * other[2] - _data[2] * other[5]
-                    + _data[0] * other[1] - _data[1] * other[0],
-
-                _data[5] * other[0] - _data[0] * other[5]
-                    + _data[6] * other[3] - _data[3] * other[6]
-                    + _data[1] * other[2] - _data[2] * other[1],
-
-                _data[6] * other[1] - _data[1] * other[6]
-                    + _data[0] * other[4] - _data[4] * other[0]
-                    + _data[2] * other[3] - _data[3] * other[2],
-
-                _data[0] * other[2] - _data[2] * other[0]
-                    + _data[1] * other[5] - _data[5] * other[1]
-                    + _data[3] * other[4] - _data[4] * other[3]
-            );
+            IVector<CrossType, 7>	result;
+			
+			for (std::size_t k = 0; k < 7; ++k)
+				result[k] = w(k + 1, k + 3) + w(k + 2, k + 6) + w(k + 4, k + 5);
+			
+			return result;
         }
 
         // --------------------------------------------------------
@@ -323,30 +431,16 @@ struct IVector
         {
             constexpr std::size_t Count = N * (N - 1) / 2;
 
-            using ResultType = decltype(
-                std::declval<TType>() * std::declval<TType>()
-                - std::declval<TType>() * std::declval<TType>()
-            );
-
-            IVector<ResultType, Count> result{};
+            IVector<CrossType, Count> result{};
 
             std::size_t k = 0;
 
             for (std::size_t i = 0; i < N; ++i)
-            {
                 for (std::size_t j = i + 1; j < N; ++j)
-                {
-                    result[k++] =
-                        _data[i] * other[j]
-                        - _data[j] * other[i];
-                }
-            }
+                    result[k++] = _data[i] * other._data[j]
+                        		- _data[j] * other._data[i];
 
             return result;
-        }
-
-        static constexpr std::size_t    dimension() {
-            return N;
         }
 };
 
@@ -367,7 +461,9 @@ IVector(Args...) -> IVector<std::common_type_t<Args...>, sizeof...(Args)>;
 // ============================================================
 
 template<typename Scalar, typename TType, std::size_t N>
-auto operator*(const Scalar& scalar, const IVector<TType, N>& vector)
+	requires (!type::ivector<Scalar>)
+		&& requires(const TType& t, const Scalar& s) { t * s; }
+constexpr auto operator*(const Scalar& scalar, const IVector<TType, N>& vector)
 {
     return vector * scalar;
 }

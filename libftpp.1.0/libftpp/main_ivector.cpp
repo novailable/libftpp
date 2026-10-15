@@ -35,7 +35,7 @@ static_assert(b / 2 == V3i(2, 2, 3));
 static_assert(-a == V3i(-1, -2, -3));
 static_assert(a != b);
 static_assert(a.dot(b) == 32);
-static_assert(a.size() == 3 && V3i::Dimension == 3);
+static_assert(a.size() == 3 && V3i::dimension == 3);
 static_assert(V3i(7) == V3i(7, 7, 7) || true);   // fill ctor is explicit, just must compile
 
 // ---- type behaviour --------------------------------------------------
