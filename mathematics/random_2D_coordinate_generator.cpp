@@ -27,7 +27,7 @@ long long   Random2DCoordinateGenerator::operator()(const long long& x, const lo
             static_cast<std::uint32_t>(static_cast<std::uint64_t>(y) >> 32)
     };
     std::mt19937_64 gen(seq);
-    std::uniform_int_distribution<long long> dist(-10000000000LL, 10000000000LL);
+    std::uniform_int_distribution<long long> dist(long_min, long_max);
     return (dist(gen));
 
 }

@@ -68,6 +68,9 @@ struct IVector
 
 
     public:
+
+        using x = (*this)[0];
+
         using value_type = TType;
 		static constexpr std::size_t dimension = N;
         // --------------------------------------------------------
