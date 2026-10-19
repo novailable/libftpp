@@ -10,6 +10,8 @@ int main() {
 
     std::cout << "Sampling 2D Perlin noise over a " << gridSize << "x" << gridSize << " grid:" << std::endl << std::endl;
 
+	std::cout << "sizeof TestObj " << sizeof(perlin) << std::endl;
+	std::cout << "alignof TestObj " << alignof(perlin) << std::endl;
     for (int y = 0; y < gridSize; ++y) {
         for (int x = 0; x < gridSize; ++x) {
             float sample = perlin.sample(x * 0.1f, y * 0.1f); // Adjust these factors as needed

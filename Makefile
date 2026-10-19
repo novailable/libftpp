@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    Makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: aoo <aoo@student.42.fr>                    +#+  +:+       +#+         #
+#    By: aoo <aoo@student.42singapore.sg>           +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2025/03/19 23:28:02 by aoo               #+#    #+#              #
-#    Updated: 2026/10/12 19:45:11 by aoo              ###   ########.fr        #
+#    Updated: 2026/10/18 02:13:29 by aoo              ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -21,7 +21,8 @@ RM = rm -f
 
 MATHEMATICS = mathematics/ivector2.cpp \
               mathematics/ivector3.cpp \
-              mathematics/random_2D_coordinate_generator.cpp
+              mathematics/random_2D_coordinate_generator.cpp \
+			  mathematics/perlin_noise_2D.cpp			  
 
 SRCS = $(MATHEMATICS)
 OBJS = $(SRCS:.cpp=.o)

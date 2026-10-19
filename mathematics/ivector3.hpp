@@ -40,7 +40,10 @@ struct IVector3
     }
 
     float length() const {
-        return std::sqrt(static_cast<float>(x * x + y * y + z * z));
+		float	fx = static_cast<float>(x),
+				fy = static_cast<float>(y),
+				fz = static_cast<float>(z);
+        return std::sqrt(fx * fx + fy * fy + fz * fz);
     }
 
     IVector3<float> normalize() const {

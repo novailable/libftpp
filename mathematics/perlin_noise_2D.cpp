@@ -1,4 +1,3 @@
-#include <cmath>
 #include "perlin_noise_2D.hpp"
 
 float   PerlinNoise2D::fade(float t)
@@ -11,10 +10,12 @@ float   PerlinNoise2D::lerp(float a, float b, float t)
     return a + t * (b - a);
 }
 
-auto   PerlinNoise2D::gradient(int x, int y) const
+IVector2<float>   PerlinNoise2D::gradient(int x, int y) const
 {
-    long long value = _random2D(x, y), min = _random2D.long_min, max = _random2D.long_max;
-    double  normalize = static_cast<double>(value - min) / static_cast<double>(max - min);
+    long double value = static_cast<long double>(_random2D(x, y)), 
+				min = static_cast<long double>(_random2D.long_min),
+				max = static_cast<long double>(_random2D.long_max),
+    			normalize = (value - min) / (max - min);
 
     float   angle = static_cast<float>(normalize) * 2.0f * pi;
     return IVector2<float>(static_cast<float>(std::cos(angle)),
@@ -22,10 +23,10 @@ auto   PerlinNoise2D::gradient(int x, int y) const
     );
 }
 
-float   PerlinNoise2D::dotGradient(int x0, int y0, int x1, int y1) const
+float   PerlinNoise2D::dotGradient(int gridx, int gridy, float x, float y) const
 {
-    const IVector2<float> g = gradient(x0, y0);
-    const IVector2<float> distance(x1 - static_cast<float>(x0), y1 - static_cast<float>(y0));
+    const IVector2<float> g = gradient(gridx, gridy);
+    const IVector2<float> distance(x - static_cast<float>(gridx), y - static_cast<float>(gridy));
 
     return (g.dot(distance));
 }
@@ -36,7 +37,7 @@ float   PerlinNoise2D::sample(float x, float y) const
     int y0 = static_cast<int>(std::floor(y));
 
     int x1 = x0 + 1;
-    int y1 = y1 + 1;                                                                                                                   
+    int y1 = y0 + 1;                                                                                                                   
 
 
     float   sx = fade(x - static_cast<float>(x0));

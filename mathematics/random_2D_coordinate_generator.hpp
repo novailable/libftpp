@@ -2,6 +2,8 @@
 
 #include <random>
 #include <limits>
+#include <cstdint>
+
 
 class Random2DCoordinateGenerator
 {
@@ -10,8 +12,8 @@ class Random2DCoordinateGenerator
 
     public:
 
-        long long long_min = std::numeric_limits<long long>::min();
-        long long long_max = std::numeric_limits<long long>::max();
+        const long long long_min = std::numeric_limits<long long>::min();
+        const long long long_max = std::numeric_limits<long long>::max();
         Random2DCoordinateGenerator();
         Random2DCoordinateGenerator(long long seed);
 

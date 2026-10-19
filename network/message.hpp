@@ -1,5 +1,7 @@
 #pragma once
 
+#include <iostream>
+
 template <typename T>
 class   Message
 {
@@ -10,6 +12,7 @@ class   Message
         Message(int type);
         int type();
     
+		template <typename output>
         operator<<();
         operator>>();
 };
