@@ -16,7 +16,7 @@ class Pool
             private:
 				friend class Pool;
 				
-				O
+				Object(Pool* , TType* )
         }
         void    resize(const size_t& numberOfObjectStored)
         {
