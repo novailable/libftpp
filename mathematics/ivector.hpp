@@ -2,19 +2,24 @@
 
 #include <array>
 #include <cmath>
-#include <cstddef>
 #include <concepts>
+#include <cstddef>
 #include <stdexcept>
 #include <type_traits>
 #include <utility>
 
 // ============================================================
-// IVector<TType, N>
-// Generic N-dimensional vector.
+// IVector<TType, N, Derived>
+// Generic N-dimensional vector (CRTP base).
 // Requires C++20.
+//
+// Derived must be a template <typename, std::size_t> that
+// publicly derives from IVector<T, N, Derived>.
+// A ready-made one, Vector<T, N>, is provided at the bottom.
 // ============================================================
 
-template<typename TType, std::size_t N, typename Derived = void>
+template<typename TType, std::size_t N,
+	template <typename, std::size_t> typename Derived>
 struct	IVector;
 
 namespace	type::detail
@@ -31,15 +36,22 @@ namespace	type
 	inline constexpr bool ivector = detail::is_vector<T>;
 }
 
-template<typename TType, std::size_t N, typename Derived>
+template<typename TType, std::size_t N,
+	template <typename, std::size_t> typename Derived>
 struct IVector
 {
-	private:
+	static_assert(N > 0, "IVector needs at least one component");
+
+	protected:
 		std::array<TType, N> _data{};
 
-		using Self = std::conditional_t<std::is_void_v<Derived>, IVector<TType, N, void>, Derived>;
+	private:
+		using Self = Derived<TType, N>;
 		using ProductType = decltype(std::declval<TType>() * std::declval<TType>());
 		using CrossType = decltype(std::declval<ProductType>() - std::declval<ProductType>());
+
+		template<typename U>
+		using Rebind = Derived<U, N>;
 
 		enum struct	error_type
 		{
@@ -65,8 +77,18 @@ struct IVector
 			return (false);
 		}
 
-		constexpr Self&			self()			{ return static_cast<Self&>(*this); }
-		constexpr const Self&	self() const	{ return static_cast<const Self&>(*this); }
+		constexpr Self&			self()
+		{
+			static_assert(std::is_base_of_v<IVector, Self>,
+				"Derived<TType, N> must derive from IVector<TType, N, Derived>");
+			return static_cast<Self&>(*this);
+		}
+		constexpr const Self&	self() const
+		{
+			static_assert(std::is_base_of_v<IVector, Self>,
+				"Derived<TType, N> must derive from IVector<TType, N, Derived>");
+			return static_cast<const Self&>(*this);
+		}
 
 	public:
 		using is_vector_tag = void;
@@ -140,7 +162,7 @@ struct IVector
 		}
 
 		// --------------------------------------------------------
-		// Addition
+		// Vector (component-wise) arithmetic
 		// --------------------------------------------------------
 
 		constexpr Self operator+(const Self& other) const
@@ -150,20 +172,12 @@ struct IVector
 			return result;
 		}
 
-		// --------------------------------------------------------
-		// Subtraction
-		// --------------------------------------------------------
-
 		constexpr Self operator-(const Self& other) const
 		{
 			Self result = self();
 			result -= other;
 			return result;
 		}
-
-		// --------------------------------------------------------
-		// Multiplication
-		// --------------------------------------------------------
 
 		constexpr Self operator*(const Self& other) const
 		{
@@ -172,26 +186,15 @@ struct IVector
 			return result;
 		}
 
-		// --------------------------------------------------------
-		// Division
-		// --------------------------------------------------------
-
 		constexpr Self operator/(const Self& other) const
 		{
-			Self result;
-
-			for (std::size_t i = 0; i < N; ++i)
-			{
-				if (other._data[i] == TType{})
-					error(error_type::zero_division);
-				result[i] = _data[i] / other._data[i];
-			}
-
+			Self result = self();
+			result /= other;
 			return result;
 		}
 
 		// --------------------------------------------------------
-		// Scalar Compound assignment
+		// Scalar compound assignment
 		// --------------------------------------------------------
 
 		template<typename Scalar>
@@ -240,8 +243,11 @@ struct IVector
 		}
 
 		// --------------------------------------------------------
-		// Scalar Arithmetic
+		// Scalar arithmetic
+		// The result component type follows normal C++ promotion,
+		// e.g. Vector<int, 3> * 2.5 -> Vector<double, 3>.
 		// --------------------------------------------------------
+
 		template<typename Scalar>
 			requires (!type::ivector<Scalar>)
 				&& requires(const TType& t, const Scalar& s) { t + s; }
@@ -251,7 +257,7 @@ struct IVector
 				std::declval<const TType&>() + std::declval<const Scalar&>()
 			);
 
-			IVector<ResultType, N> result;
+			Rebind<ResultType> result;
 
 			for (std::size_t i = 0; i < N; ++i)
 				result[i] = _data[i] + scalar;
@@ -268,7 +274,7 @@ struct IVector
 				std::declval<const TType&>() - std::declval<const Scalar&>()
 			);
 
-			IVector<ResultType, N> result;
+			Rebind<ResultType> result;
 
 			for (std::size_t i = 0; i < N; ++i)
 				result[i] = _data[i] - scalar;
@@ -285,7 +291,7 @@ struct IVector
 				std::declval<const TType&>() * std::declval<const Scalar&>()
 			);
 
-			IVector<ResultType, N> result;
+			Rebind<ResultType> result;
 
 			for (std::size_t i = 0; i < N; ++i)
 				result[i] = _data[i] * scalar;
@@ -308,7 +314,7 @@ struct IVector
 				std::declval<const TType&>() / std::declval<const Scalar&>()
 			);
 
-			IVector<ResultType, N> result;
+			Rebind<ResultType> result;
 
 			for (std::size_t i = 0; i < N; ++i)
 				result[i] = _data[i] / scalar;
@@ -358,12 +364,13 @@ struct IVector
 		auto normalize() const
 		{
 			const auto len = length();
+			using len_type = std::remove_cvref_t<decltype(len)>;
 			using ResultType = decltype(
-				std::declval<TType>() / std::declval<decltype(len)>());
+				std::declval<TType>() / std::declval<len_type>());
 
-			Self<ResultType, N>	result{};
+			Rebind<ResultType>	result{};
 
-			if (len != decltype(len){})
+			if (len != len_type{})
 				for (std::size_t i = 0; i < N; ++i)
 					result[i] = _data[i] / len;
 			return result;
@@ -373,7 +380,7 @@ struct IVector
 		// 2D perpendicular vector: rotate 90 degrees counterclockwise
 		// --------------------------------------------------------
 
-		Self cross() const requires (N == 2)
+		constexpr Self cross() const requires (N == 2)
 		{
 			return Self(-_data[1], _data[0]);
 		}
@@ -382,7 +389,7 @@ struct IVector
 		// 2D cross product: returns a scalar
 		// --------------------------------------------------------
 
-		auto cross(const Self& other) const requires (N == 2)
+		constexpr auto cross(const Self& other) const requires (N == 2)
 		{
 			return _data[0] * other._data[1]
 				- _data[1] * other._data[0];
@@ -392,9 +399,9 @@ struct IVector
 		// 3D cross product: returns a vector
 		// --------------------------------------------------------
 
-		auto cross(const Self& other) const requires (N == 3)
+		constexpr auto cross(const Self& other) const requires (N == 3)
 		{
-			return IVector<CrossType, 3>(
+			return Rebind<CrossType>(
 				_data[1] * other._data[2] - _data[2] * other._data[1],
 				_data[2] * other._data[0] - _data[0] * other._data[2],
 				_data[0] * other._data[1] - _data[1] * other._data[0]
@@ -403,16 +410,17 @@ struct IVector
 
 		// --------------------------------------------------------
 		// 7D cross product: returns a vector
+		// Convention: e_i x e_{i+1} = e_{i+3} (indices mod 7).
 		// --------------------------------------------------------
 
-		auto cross(const Self& other) const requires (N == 7)
+		constexpr auto cross(const Self& other) const requires (N == 7)
 		{
 			auto	w = [&](std::size_t i, std::size_t j) {
 				return _data[i % 7] * other._data[j % 7]
 					- _data[j % 7] * other._data[i % 7];
 			};
 
-			IVector<CrossType, 7>	result;
+			Rebind<CrossType>	result;
 
 			for (std::size_t k = 0; k < 7; ++k)
 				result[k] = w(k + 1, k + 3) + w(k + 2, k + 6) + w(k + 4, k + 5);
@@ -421,17 +429,17 @@ struct IVector
 		}
 
 		// --------------------------------------------------------
-		// Wedge product: works in any dimension.
+		// Wedge product: works in any dimension >= 2.
 		//
 		// Returns N * (N - 1) / 2 components.
 		// This is a bivector, not generally an ordinary vector.
 		// --------------------------------------------------------
 
-		auto wedge(const Self& other) const
+		constexpr auto wedge(const Self& other) const requires (N >= 2)
 		{
 			constexpr std::size_t Count = N * (N - 1) / 2;
 
-			IVector<CrossType, Count> result{};
+			Derived<CrossType, Count> result{};
 
 			std::size_t k = 0;
 
@@ -445,25 +453,38 @@ struct IVector
 };
 
 // ============================================================
-// Class template argument deduction
-//
-// IVector a(1, 2, 3) -> IVector<int, 3>
-// IVector b(1.0, 2.0) -> IVector<double, 2>
-// ============================================================
-
-template<typename... Args>
-IVector(Args...) -> IVector<std::common_type_t<Args...>, sizeof...(Args)>;
-
-// ============================================================
 // Scalar multiplication from the left
 //
 // 3 * vector
 // ============================================================
 
-template<typename Scalar, typename TType, std::size_t N, typename Derived>
+template<typename Scalar, typename TType, std::size_t N,
+	template <typename, std::size_t> typename Derived>
 	requires (!type::ivector<Scalar>)
 		&& requires(const TType& t, const Scalar& s) { t * s; }
 constexpr auto operator*(const Scalar& scalar, const IVector<TType, N, Derived>& vector)
 {
 	return vector * scalar;
 }
+
+// ============================================================
+// Vector<TType, N>
+// Ready-to-use concrete vector.
+// ============================================================
+
+template<typename TType, std::size_t N>
+struct Vector : IVector<TType, N, Vector>
+{
+	using Base = IVector<TType, N, Vector>;
+	using Base::Base;
+};
+
+// ============================================================
+// Class template argument deduction
+//
+// Vector a(1, 2, 3)   -> Vector<int, 3>
+// Vector b(1.0, 2.0)  -> Vector<double, 2>
+// ============================================================
+
+template<typename... Args>
+Vector(Args...) -> Vector<std::common_type_t<Args...>, sizeof...(Args)>;

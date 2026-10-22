@@ -1,13 +1,14 @@
 #pragma once
 
+#include <cstddef>
 #include "ivector.hpp"
 
-template<typename TType>
-struct  IVector2 : public IVector<TType, 2, IVector2<TType>>
+template<typename TType, std::size_t N = 2>
+struct  IVector2 : public IVector<TType, 2, IVector2>
 {
-    using Base = IVector<TType, 2, IVector2<TType>>;
+    using Base = IVector<TType, 2, IVector2>;
     using Base::Base;
 
-    TType &x = (*this)[0];
-    TType &y = (*this)[1];
+    TType &x = this->_data[0];
+    TType &y = this->_data[1];
 };
