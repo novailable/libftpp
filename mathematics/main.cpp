@@ -7,5 +7,8 @@ int main()
     IVector2<int>   b{2, 1};
 
     auto    w = a + b;
-    std::cout << w.x << w.y << std::endl;
+    w.x = 10;
+
+    std::cout << a.x << std::endl;
+    std::cout << w.x << " " << w.y << std::endl;
 }

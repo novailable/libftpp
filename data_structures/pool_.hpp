@@ -16,8 +16,64 @@ class Pool
             private:
 				friend class Pool;
 				
-				Object(Pool* , TType* )
-        }
+				Pool*	_pool;
+				TType*	_slot;
+				
+				Object(Pool* pool, TType* slot) noexcept : _pool(pool), _slot(slot){}
+
+				void	release() noexcept
+				{
+					if (_pool != nullptr && _slot != nullptr)
+					{
+						_slot->~TType();
+						_pool->giveBack(_slot);
+					}
+					_pool = nullptr;
+					_slot = nullptr;
+				}
+			
+			public:
+				Object() noexcept : _pool(nullptr), _slot(nullptr) {}
+				
+				Object(const Object&) = delete;
+				Object	&operator=(const Object&) = delete;
+
+				Object(Object&& other) noexcept : _pool(other._pool), _slot(other._slot)
+				{
+					other._pool = nullptr;
+					other._slot = nullptr;
+				}
+
+				Object	&operator=(Object&& other) const
+				{
+					if (this != &other)
+					{
+						release();
+						_pool = other._pool;
+						_slot = other._slot;
+						other._pool = nullptr;
+						other._slot = nullptr;
+					}
+					return *this;
+				}
+
+				~Object() { release(); }
+
+			TType*	operator->() noexcept { return _slot;}
+			const TType*	operator->() noexcept { return _slot;}
+			TType&	operator*() noexcept { return _slot;}
+			const TType&	operator->() noexcept { return _slot;}
+		};
+	
+		Pool() = default;
+		Pool(const Pool&) = delete;
+		Pool	&operator=(const Pool&) = delete;
+
+		~Pool()
+		{
+			for (void* block : _blocks)
+				::operator delete(block, std::align_val_t(alignof(TType)));
+		}
         void    resize(const size_t& numberOfObjectStored)
         {
 			if (numberOfObjectStored <= _capacity)
@@ -27,7 +83,7 @@ class Pool
 			}
 	
 			int	extra = numberOfObjectStored - _capacity;
-			void	*block = ::operator new(extra * sizeof(TType), std::align_val_t(alignof(TType));
+			void	*block = ::operator new(extra * sizeof(TType), std::align_val_t(alignof(TType)));
 			try
 			{
 				_blocks.push_back(block);
@@ -45,5 +101,15 @@ class Pool
 			_capacity = numberOfObjectStored;
 		}
         
-        TType* operator -> ()
+    template<typename... TArgs>
+	Object	acquire(TArgs&&... args)
+	{
+		if (_free.empty())
+			throw std::runtime_error("Pool: no free object available");
+		
+		TType*	slot = _free.back();
+		_free.pop_back();
+	}
+
+
 }

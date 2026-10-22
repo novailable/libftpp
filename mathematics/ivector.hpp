@@ -115,17 +115,27 @@ struct IVector
 			_data.fill(value);
 		}
 
+		IVector(const IVector &other) : _data(other._data) {}
+
+		IVector	operator=(const IVector &other)
+		{
+			if (*this != other)
+			{
+				_data = other._data;
+			}
+			return (*this);
+		}
 		// --------------------------------------------------------
 		// Access
 		// --------------------------------------------------------
 
-		constexpr TType& operator[](std::size_t i)				{ return _data[i]; }
-		constexpr const TType& operator[](std::size_t i) const	{ return _data[i]; }
+		TType& operator[](std::size_t i)				{ return _data[i]; }
+		const TType& operator[](std::size_t i) const	{ return _data[i]; }
 
-		constexpr TType& at(std::size_t i)				{ return _data.at(i); }
-		constexpr const TType& at(std::size_t i) const	{ return _data.at(i); }
+		TType& at(std::size_t i)				{ return _data.at(i); }
+		const TType& at(std::size_t i) const	{ return _data.at(i); }
 
-		constexpr std::size_t size() const	{ return N; }
+		std::size_t size() const	{ return N; }
 
 		// --------------------------------------------------------
 		// Compound assignment
