@@ -11,9 +11,9 @@ class Random2DCoordinateGenerator
         long long   _seed;
 
     public:
-
         const long long long_min = std::numeric_limits<long long>::min();
         const long long long_max = std::numeric_limits<long long>::max();
+    
         Random2DCoordinateGenerator();
         Random2DCoordinateGenerator(long long seed);
 
