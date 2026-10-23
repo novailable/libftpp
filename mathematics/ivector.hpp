@@ -7,16 +7,73 @@
 #include <stdexcept>
 #include <type_traits>
 #include <utility>
+#include <iostream>
 
-// ============================================================
-// IVector<TType, N, Derived>
-// Generic N-dimensional vector (CRTP base).
-// Requires C++20.
-//
-// Derived must be a template <typename, std::size_t> that
-// publicly derives from IVector<T, N, Derived>.
-// A ready-made one, Vector<T, N>, is provided at the bottom.
-// ============================================================
+/**
+ * @file ivector.hpp
+ * @brief Header-only, fixed-size N-dimensional vector base class.
+ *
+ * @version C++20
+ *
+ * @details
+ * IVector implements component-wise arithmetic and common geometric
+ * operations for fixed-size vectors. It uses the Curiously Recurring
+ * Template Pattern (CRTP): a derived class supplies its own type so that
+ * vector operations can return the appropriate derived type.
+ *
+ * Include this file with:
+ * @code
+ * #include "ivector.hpp"
+ * @endcode
+ *
+ * @tparam TType    Component type.
+ * @tparam N        Number of components. Must be greater than zero.
+ * @tparam Derived  Derived class template accepting <T, Dimension>.
+ *
+ * @par Design
+ * IVector is intended to be used as a base class, not instantiated as a
+ * standalone vector type. A derived class typically provides named access
+ * to components, such as x(), y(), and z().
+ *
+ * @par Arithmetic
+ * Vector-vector operators perform component-wise operations and require
+ * operands of the same derived type.
+ *
+ * Scalar arithmetic applies the scalar independently to every component.
+ * Non-compound scalar operations deduce the result component type from the
+ * corresponding C++ arithmetic expression and return Derived<ResultType, N>.
+ * Compound assignments preserve the original component type.
+ *
+ * @par Geometry
+ * The class provides dot products, magnitude, normalization, dimension-
+ * dependent cross products, and the wedge product.
+ *
+ * - cross() is available for two-dimensional vectors.
+ * - cross(other) is available for dimensions 2, 3, and 7.
+ * - wedge(other) is available for dimensions greater than or equal to 2.
+ *
+ * @par Division
+ * Vector division throws std::runtime_error if any divisor component is
+ * equal to its value-initialized zero value. Scalar division throws the
+ * same exception if the scalar compares equal to zero.
+ *
+ * @par Derived-class requirements
+ * Derived must inherit from IVector<TType, N, Derived>.
+ * Its template must support rebinding to other component types for scalar
+ * arithmetic and to other dimensions for wedge products.
+ *
+ * Component types must support the operations required by the selected
+ * functions. In particular, length() requires a compatible square-root
+ * operation, found through std::sqrt and argument-dependent lookup (ADL).
+ *
+ * @note Arithmetic is component-wise unless a function explicitly states
+ * otherwise. operator* between two vectors is not a dot product.
+ *
+ * @warning Floating-point equality is exact. Normalization of a zero-length
+ * vector returns a zero-initialized result rather than throwing.
+ *
+ * @see docs/IVector.md
+ */
 
 template<typename TType, std::size_t N,
 	template <typename, std::size_t> typename Derived>
@@ -44,6 +101,12 @@ struct IVector
 
 	protected:
 		std::array<TType, N> _data{};
+
+		// --------------------------------------------------------
+		// Constructors
+		// --------------------------------------------------------
+
+		constexpr IVector() = default;
 
 	private:
 		using Self = Derived<TType, N>;
@@ -91,15 +154,6 @@ struct IVector
 		}
 
 	public:
-		using is_vector_tag = void;
-		static constexpr std::size_t dimension = N;
-
-		// --------------------------------------------------------
-		// Constructors
-		// --------------------------------------------------------
-
-		constexpr IVector() = default;
-
 		// Construct from N individual components.
 		template<typename... Args>
 			requires (sizeof...(Args) == N
@@ -117,7 +171,7 @@ struct IVector
 
 		IVector(const IVector &other) : _data(other._data) {}
 
-		IVector	operator=(const IVector &other)
+		constexpr IVector	&operator=(const IVector &other)
 		{
 			if (*this != other)
 			{
@@ -125,6 +179,10 @@ struct IVector
 			}
 			return (*this);
 		}
+
+		using is_vector_tag = void;
+		static constexpr std::size_t dimension = N;
+
 		// --------------------------------------------------------
 		// Access
 		// --------------------------------------------------------
@@ -476,25 +534,3 @@ constexpr auto operator*(const Scalar& scalar, const IVector<TType, N, Derived>&
 {
 	return vector * scalar;
 }
-
-// ============================================================
-// Vector<TType, N>
-// Ready-to-use concrete vector.
-// ============================================================
-
-template<typename TType, std::size_t N>
-struct Vector : IVector<TType, N, Vector>
-{
-	using Base = IVector<TType, N, Vector>;
-	using Base::Base;
-};
-
-// ============================================================
-// Class template argument deduction
-//
-// Vector a(1, 2, 3)   -> Vector<int, 3>
-// Vector b(1.0, 2.0)  -> Vector<double, 2>
-// ============================================================
-
-template<typename... Args>
-Vector(Args...) -> Vector<std::common_type_t<Args...>, sizeof...(Args)>;

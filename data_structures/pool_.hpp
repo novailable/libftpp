@@ -1,6 +1,10 @@
 #pragma once
 
 #include <vector>
+#include <cstddef>
+#include <new>
+#include <utility>
+#include <stdexcept>
 
 template <typename TType>
 class Pool
@@ -9,6 +13,11 @@ class Pool
 		size_t	_capacity = 0;
 		std::vector<*void>	_blocks;
 		std::vector<TType>	_frees;
+
+		void	giveBack(TType* slot) noexcept
+		{
+			return _free.push_back(slot);
+		}
 
     public:
         class   Object
@@ -101,15 +110,27 @@ class Pool
 			_capacity = numberOfObjectStored;
 		}
         
-    template<typename... TArgs>
-	Object	acquire(TArgs&&... args)
-	{
-		if (_free.empty())
-			throw std::runtime_error("Pool: no free object available");
+		template<typename... TArgs>
+		Object	acquire(TArgs&&... args)
+		{
+			if (_free.empty())
+				throw std::runtime_error("Pool: no free object available");
+			
+			TType*	slot = _free.back();
+			_free.pop_back();
+
+			try
+			{
+				new (static_cast<void*>(slot)) TType(std::forward<TArgs>(args)...);
+			}
+			catch (...)
+			{
+				_free.push_back(slot);
+				throw;
+			}
+			return Object(this, slot);
+		}
 		
-		TType*	slot = _free.back();
-		_free.pop_back();
-	}
-
-
-}
+		size_t	capacity() const noexcept { return _capacity; }
+		size_t	available() const noexcept { return _free.size(); }
+};
