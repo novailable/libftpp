@@ -1,4 +1,5 @@
-#pragma once
+#ifndef POOL_HPP
+#define POOL_HPP
 
 #include <cstddef>
 #include <stdexcept>
@@ -135,3 +136,5 @@ class   Pool
         size_t  capacity() const noexcept { return _capacity; }
         size_t  available() const noexcept { return _free_slots.size(); }
 };
+
+#endif

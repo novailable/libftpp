@@ -1,4 +1,5 @@
-#pragma once
+#ifndef PERLIN_NOISE_2D_HPP
+#define PERLIN_NOISE_2D_HPP
 
 #include <random>
 #include <array>
@@ -22,3 +23,5 @@ class PerlinNoise2D
         IVector2<float>   gradient(int x, int y) const;
         float   sample(float x, float y) const;
 };
+
+#endif

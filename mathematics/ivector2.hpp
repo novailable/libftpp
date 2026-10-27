@@ -1,4 +1,5 @@
-#pragma once
+#ifndef IVECTOR2_HPP
+#define IVECTOR2_HPP
 
 #include <cstddef>
 #include "ivector.hpp"
@@ -25,3 +26,5 @@ struct IVector2 : IVector<TType, N, IVector2>
         return *this;
     }
 };
+
+#endif

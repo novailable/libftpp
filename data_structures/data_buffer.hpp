@@ -1,4 +1,5 @@
-#pragma once
+#ifndef DATA_BUFFER_HPP
+#define DATA_BUFFER_HPP
 
 #include <cstddef>
 #include <vector>
@@ -7,13 +8,12 @@
 #include <cstring>
 
 #define COPY_ASSERT(TType) \
-    static_assert(std::is_trivially_copyable_v<TType>::value, \
-                    "DataBuffer: type must be copyable");
+    static_assert(std::is_trivially_copyable_v<TType>, \
+                  "DataBuffer: type must be trivially copyable")
 
 #define POINTER_ASSERT(TType) \
-    static_assert(std::is_pointer_v<TType>::value, \
-                    "DataBuffer: type must not be pointer");
-        
+    static_assert(!std::is_pointer_v<TType>, \
+                  "DataBuffer: type must not be a pointer")        
 
 class   DataBuffer
 {
@@ -51,5 +51,8 @@ class   DataBuffer
 
         std::size_t size() const noexcept;
         bool        empty() const noexcept;
-        void        clear() noexcept;
+        void        reset() noexcept;
+        void        rewind() noexcept;
 };
+
+#endif

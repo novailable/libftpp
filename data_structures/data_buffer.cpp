@@ -48,8 +48,10 @@ std::size_t DataBuffer::size() const noexcept { return _bytes.size() - _cursor; 
 
 bool    DataBuffer::empty() const noexcept { return size() == 0; }
 
-void    DataBuffer::clear() noexcept
+void    DataBuffer::reset() noexcept
 {
     _bytes.clear();
     _cursor = 0;
 }
+
+void    DataBuffer::rewind() noexcept { _cursor = 0; }

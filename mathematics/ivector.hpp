@@ -1,4 +1,5 @@
-#pragma once
+#ifndef IVECTOR_HPP
+#define IVECTOR_HPP
 
 #include <array>
 #include <cmath>
@@ -534,3 +535,5 @@ constexpr auto operator*(const Scalar& scalar, const IVector<TType, N, Derived>&
 {
 	return vector * scalar;
 }
+
+#endif
