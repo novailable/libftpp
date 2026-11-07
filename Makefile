@@ -3,17 +3,17 @@
 #                                                         :::      ::::::::    #
 #    Makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: aoo <aoo@student.42.fr>                    +#+  +:+       +#+         #
+#    By: aoo <aoo@student.42singapore.sg>           +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2025/03/19 23:28:02 by aoo               #+#    #+#              #
-#    Updated: 2026/10/27 14:25:06 by aoo              ###   ########.fr        #
+#    Updated: 2026/10/30 22:49:05 by aoo              ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 NAME = libftpp.a
 
 CXX = c++
-INCLUDES = -Idata_structures -Idesign_patterns -Imathematics 
+INCLUDES = -Idata_structures -Idesign_patterns -Iiostream -Imathematics
 CXXFLAGS = $(INCLUDES) -Wall -Wextra -Werror -std=c++20
 
 AR = ar rcs
@@ -23,12 +23,14 @@ DATA_STRUCTURES = data_structures/data_buffer.cpp
 
 DESIGN_PATTERNS = design_patterns/memento.cpp
 
+IOSTREAM = iostream/thread_safe_iostream.cpp
+
 MATHEMATICS = mathematics/ivector2.cpp \
               mathematics/ivector3.cpp \
               mathematics/random_2D_coordinate_generator.cpp \
 			  mathematics/perlin_noise_2D.cpp			  
 
-SRCS = $(DATA_STRUCTURES) $(DESIGN_PATTERNS) $(MATHEMATICS) 
+SRCS = $(DATA_STRUCTURES) $(DESIGN_PATTERNS) $(IOSTREAM) $(MATHEMATICS) 
 OBJS = $(SRCS:.cpp=.o)
 
 all: $(NAME)

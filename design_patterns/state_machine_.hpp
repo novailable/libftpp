@@ -49,7 +49,7 @@ class StateMachine
             return it->second;
         }
 
-        Node& _node(StateId id)
+        Node& find_node(StateId id)
         {
             if (id >= _nodes.size() || !_nodes[id].alive)
                 throw std::logic_error("StateMachine: no such state");
@@ -84,8 +84,8 @@ class StateMachine
 
         void addTransition(StateId from, StateId to, Action fn)
         {
-            Node& n = _node(from);
-            _node(to);                                          // validate target
+            Node& n = find_node(from);
+            find_node(to);                                          // validate target
             if (Edge* e = _findEdge(n, to))
                 e->actions.push_back(std::move(fn));
             else
@@ -99,7 +99,7 @@ class StateMachine
 
         void addAction(StateId state, Action fn)
         {
-            _node(state).actions.push_back(std::move(fn));
+            find_node(state).actions.push_back(std::move(fn));
         }
 
         void addAction(const TState& state, Action fn)
@@ -110,8 +110,8 @@ class StateMachine
         // Hot-path overload: no hashing.
         void transitionTo(StateId target)
         {
-            _node(target);
-            Edge* e = _findEdge(_node(_current), target);
+            find_node(target);
+            Edge* e = _findEdge(find_node(_current), target);
             if (!e)
                 throw std::logic_error("StateMachine: transition not defined");
             _run(e->actions);
