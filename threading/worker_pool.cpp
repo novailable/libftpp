@@ -51,7 +51,11 @@ void	WorkerPool::addWorker()
 		}
 		catch(const std::exception& e)
 		{
-			threadSafeCerr << e.what() << std::endl;
+			threadSafeCerr << "WorkerPool: job: " << e.what() << std::endl;
+		}
+		catch(...)
+		{
+			threadSafeCerr << "WorkerPool: job: thrown an exception" << std::endl; 
 		}
 	}
 }
@@ -85,7 +89,7 @@ void	WorkerPool::addJob(const Job& jobToExecute)
 	
 }
 
-void	WorkerPool::addJob(std::shared_ptr<IJob>& jobToExecute)
+void	WorkerPool::addJob(std::shared_ptr<WorkerPool::IJobs> jobToExecute)
 {
 	if (!jobToExecute)
 		throw	std::invalid_argument("WorkerPool::addJob: empty job");

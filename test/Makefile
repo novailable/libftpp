@@ -29,7 +29,8 @@ LIB_SRCS = ../data_structures/data_buffer.cpp \
 
 TESTS = thread_safe_iostream_test \
         thread_safe_queue_test \
-        thread_test
+        thread_test \
+		worker_pool_test
 
 BUILD_DIR = build
 

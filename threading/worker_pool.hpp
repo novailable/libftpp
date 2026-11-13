@@ -26,10 +26,10 @@ class	WorkerPool
 		void	addWorker();
 
 	public:
-		class	IJob
+		class	IJobs
 		{
 			public:
-				virtual ~IJob() = default;
+				virtual ~IJobs() = default;
 				virtual void	execute() = 0;
 		};
 	
@@ -42,7 +42,7 @@ class	WorkerPool
 		WorkerPool&	operator=(WorkerPool&&) = delete;
 	
 		void	addJob(const Job& jobToExecute);
-		void	addJob(std::shared_ptr<IJob>& jobToExecute);
+		void	addJob(std::shared_ptr<IJobs> jobToExecute);
 
 		std::size_t	threadCount() const noexcept;
 };
