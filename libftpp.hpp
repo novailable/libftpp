@@ -1,3 +1,10 @@
-#pragma once
+#ifndef LIBFTPP_HPP
+#define LIBFTPP_HPP
 
-#include "mathematics/ivector2.hpp"
+#include "data_structures/data_structures.hpp"
+#include "design_patterns/design_patterns.hpp"
+#include "iostream/thread_safe_iostream.hpp"
+#include "threading/threading.hpp"
+#include "mathematics/mathematics.hpp"
+
+#endif

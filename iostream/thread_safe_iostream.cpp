@@ -40,9 +40,20 @@ ThreadSafeIOStream::Guard&	ThreadSafeIOStream::Guard::operator<<(std::ios_base& 
 
 /// ThreadSafeIOStream
 
+ThreadSafeIOStream::ThreadSafeIOStream()
+{
+	setInStream(std::cin);
+	setOutStream(std::cout);
+}
+
 ThreadSafeIOStream::ThreadSafeIOStream(std::istream &in, std::ostream &out)
 {
 	setInStream(in);
+	setOutStream(out);
+}
+
+ThreadSafeIOStream::ThreadSafeIOStream(std::ostream &out)
+{
 	setOutStream(out);
 }
 

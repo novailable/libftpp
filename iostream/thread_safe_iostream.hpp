@@ -68,8 +68,10 @@ class ThreadSafeIOStream
 				Guard&	operator<<(std::ios_base& (*func)(std::ios_base&));
 		};
 
-		explicit ThreadSafeIOStream(std::istream &in = std::cin,
-									std::ostream &out = std::cout);
+		ThreadSafeIOStream();
+		ThreadSafeIOStream(std::istream &in, std::ostream &out);
+		explicit ThreadSafeIOStream(std::ostream &out);
+
 		~ThreadSafeIOStream() = default;
 
 		ThreadSafeIOStream(const ThreadSafeIOStream &) = delete;
@@ -95,6 +97,9 @@ class ThreadSafeIOStream
 		template <typename T>
 		ThreadSafeIOStream&	operator>>(T &value)
 		{
+			if (_in_mutex == nullptr)
+				throw	std::logic_error("no input stream");
+
 			std::lock_guard<std::mutex>	inlock(*_in_mutex);
 			std::lock_guard<std::mutex>	outlock(*_out_mutex);
 			*_in_stream >> value;
@@ -105,6 +110,9 @@ class ThreadSafeIOStream
 		template <typename T>
 		void	prompt(const std::string &question, T &dest)
 		{
+			if (_in_mutex == nullptr)
+				throw	std::logic_error("no input stream");
+
 			std::lock_guard<std::mutex>	inlock(*_in_mutex);
 			std::lock_guard<std::mutex>	outlock(*_out_mutex);
 
@@ -137,6 +145,8 @@ class ThreadSafeIOStream
 		}
 };
 
-inline thread_local	ThreadSafeIOStream threadSafeCout;
+inline thread_local	ThreadSafeIOStream	threadSafeCout;
+
+inline thread_local ThreadSafeIOStream	threadSafeCerr{std::cerr};
 
 #endif

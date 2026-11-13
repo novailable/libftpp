@@ -1,57 +1,84 @@
-ROOT = ..
 
 CXX = c++
-AR = ar rcs
-RM = rm -rf
+RM = rm -f
+
+INCLUDES = -I.. \
+           -I../data_structures \
+           -I../design_patterns \
+           -I../iostream \
+           -I../mathematics \
+           -I../threading
+
+CXXFLAGS = $(INCLUDES) -Wall -Wextra -Werror -std=c++20 -pthread
+
+LDFLAGS = -pthread
+
+TSAN_FLAGS = -g -O1 -fsanitize=thread -fno-omit-frame-pointer
+
+LIB = ../libftpp.a
+
+LIB_SRCS = ../data_structures/data_buffer.cpp \
+           ../design_patterns/memento.cpp \
+           ../iostream/thread_safe_iostream.cpp \
+           ../mathematics/ivector2.cpp \
+           ../mathematics/ivector3.cpp \
+           ../mathematics/random_2D_coordinate_generator.cpp \
+           ../mathematics/perlin_noise_2D.cpp \
+           ../threading/thread.cpp \
+           ../threading/worker_pool.cpp
+
+TESTS = thread_safe_iostream_test \
+        thread_safe_queue_test \
+        thread_test
 
 BUILD_DIR = build
-NAME = test_tsan
-LIB = libftpp_tsan.a
 
-INCLUDES = -I$(ROOT)/data_structures \
-           -I$(ROOT)/design_patterns \
-           -I$(ROOT)/iostream \
-           -I$(ROOT)/mathematics
+TEST_BINS = $(addprefix $(BUILD_DIR)/,$(TESTS))
+TSAN_BINS = $(addprefix $(BUILD_DIR)/tsan/,$(TESTS))
 
-CXXFLAGS = $(INCLUDES) -Wall -Wextra -Werror -std=c++20
-TSAN_FLAGS = -g -O1 -fsanitize=thread -fno-omit-frame-pointer -pthread
+all: $(TEST_BINS)
 
-SRCS = $(ROOT)/data_structures/data_buffer.cpp \
-       $(ROOT)/design_patterns/memento.cpp \
-       $(ROOT)/iostream/thread_safe_iostream.cpp \
-       $(ROOT)/mathematics/ivector2.cpp \
-       $(ROOT)/mathematics/ivector3.cpp \
-       $(ROOT)/mathematics/random_2D_coordinate_generator.cpp \
-       $(ROOT)/mathematics/perlin_noise_2D.cpp
+# Normal test compilation
+$(BUILD_DIR)/%: %.cpp $(LIB) | $(BUILD_DIR)
+	$(CXX) $(CXXFLAGS) $< $(LIB) $(LDFLAGS) -o $@
 
-OBJS = $(patsubst $(ROOT)/%.cpp,$(BUILD_DIR)/%.o,$(SRCS))
-
-TEST_SRC = thread_safe_iostream_test.cpp
-
-all: $(NAME)
+# ThreadSanitizer compilation
+$(BUILD_DIR)/tsan/%: %.cpp $(LIB_SRCS) | $(BUILD_DIR)/tsan
+	$(CXX) $(CXXFLAGS) $(TSAN_FLAGS) $< $(LIB_SRCS) $(LDFLAGS) -o $@
 
 $(BUILD_DIR):
-	mkdir -p $(BUILD_DIR)
+	mkdir -p $@
 
-$(BUILD_DIR)/%.o: $(ROOT)/%.cpp
-	mkdir -p $(dir $@)
-	$(CXX) $(CXXFLAGS) $(TSAN_FLAGS) -c $< -o $@
+$(BUILD_DIR)/tsan:
+	mkdir -p $@
 
-$(LIB): $(OBJS)
-	$(AR) $(LIB) $(OBJS)
+# Execute all normal tests
+run: all
+	@set -e; \
+	for test in $(TEST_BINS); do \
+		echo ""; \
+		echo "========================================"; \
+		echo "Running $$test"; \
+		echo "========================================"; \
+		./$$test; \
+	done; \
+	echo ""; \
+	echo "All tests passed!"
 
-$(NAME): $(TEST_SRC) $(LIB) | $(BUILD_DIR)
-	$(CXX) $(CXXFLAGS) $(TSAN_FLAGS) $(TEST_SRC) $(LIB) -o $(NAME)
-
-run: $(NAME)
-	./$(NAME)
+# Execute all tests with ThreadSanitizer
+tsan: $(TSAN_BINS)
+	@set -e; \
+	for test in $(TSAN_BINS); do \
+		echo ""; \
+		echo "========================================"; \
+		echo "Running $$test (ThreadSanitizer)"; \
+		echo "========================================"; \
+		./$$test; \
+	done; \
+	echo ""; \
+	echo "All ThreadSanitizer tests passed!"
 
 clean:
-	$(RM) $(BUILD_DIR) *.dSYM
+	rm -rf $(BUILD_DIR)
 
-fclean: clean
-	$(RM) $(NAME) $(LIB)
-
-re: fclean all
-
-.PHONY: all run clean fclean re
+.PHONY: all run tsan clean
