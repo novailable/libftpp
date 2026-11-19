@@ -2,8 +2,8 @@
 
 PresistentWorker::PresistentWorker() 
     :   _running{true},
-        _worker(&PresistentWorker::workerJob, this),
-        _tasks{std::make_shared<const Tasks>()}
+        _tasks{std::make_shared<const Tasks>()},
+        _worker(&PresistentWorker::workerJob, this)
 {
     threadSafeCerr.setPrefix("PresistentWorker::");
 }

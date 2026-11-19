@@ -25,12 +25,14 @@ LIB_SRCS = ../data_structures/data_buffer.cpp \
            ../mathematics/random_2D_coordinate_generator.cpp \
            ../mathematics/perlin_noise_2D.cpp \
            ../threading/thread.cpp \
-           ../threading/worker_pool.cpp
+           ../threading/worker_pool.cpp \
+		   ../threading/presistent_worker.cpp
 
 TESTS = thread_safe_iostream_test \
         thread_safe_queue_test \
         thread_test \
-		worker_pool_test
+		worker_pool_test \
+		presistent_worker_test
 
 BUILD_DIR = build
 

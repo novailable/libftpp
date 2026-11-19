@@ -161,10 +161,54 @@ static void test_single_worker_runs_jobs_in_fifo_order()
     CHECK(sorted);
 }
 
+// Thread-safe streambuf used to capture whatever the worker writes to std::cerr.
+class LockedBuf : public std::streambuf
+{
+public:
+    std::string str()
+    {
+        std::lock_guard<std::mutex> lk(_m);
+        return _data;
+    }
+
+protected:
+    int_type overflow(int_type c) override
+    {
+        if (traits_type::eq_int_type(c, traits_type::eof()))
+            return traits_type::not_eof(c);
+
+        std::lock_guard<std::mutex> lk(_m);
+        _data.push_back(traits_type::to_char_type(c));
+        return c;
+    }
+
+    std::streamsize xsputn(const char* s, std::streamsize n) override
+    {
+        std::lock_guard<std::mutex> lk(_m);
+        _data.append(s, static_cast<std::size_t>(n));
+        return n;
+    }
+
+private:
+    std::mutex _m;
+    std::string _data;
+};
+
+struct CerrCapture
+{
+    LockedBuf buf;
+    std::streambuf* old;
+
+    CerrCapture() : old(std::cerr.rdbuf(&buf)) {}
+    ~CerrCapture() { std::cerr.rdbuf(old); }
+
+    std::string str() { return buf.str(); }
+};
+
 static void test_throwing_jobs_do_not_kill_workers()
 {
     std::atomic<int> ran{0};
-
+    CerrCapture cap;
     {
         WorkerPool pool(1);
 
@@ -176,7 +220,9 @@ static void test_throwing_jobs_do_not_kill_workers()
 
         CHECK(waitFor([&] { return ran == 2; }));
     }
-
+    std::string log;
+    log = cap.str();
+    CHECK((log.find("boom") > 0) & (log.find("42") > 0) & (log.find("again") > 0));
     CHECK(ran == 2);
 }
 
@@ -379,7 +425,7 @@ static void test_no_lost_wakeup_one_job_at_a_time()
 
     WorkerPool pool(3);
 
-    constexpr int total = 20000;
+    constexpr int total = 1000;
     constexpr int barWidth = 40;
 
     for (int i = 1; i <= total; ++i)

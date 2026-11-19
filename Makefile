@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    Makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: aoo <aoo@student.42singapore.sg>           +#+  +:+       +#+         #
+#    By: aoo <aoo@student.42.fr>                    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2025/03/19 23:28:02 by aoo               #+#    #+#              #
-#    Updated: 2026/11/14 03:13:09 by aoo              ###   ########.fr        #
+#    Updated: 2026/11/19 09:57:58 by aoo              ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -37,7 +37,8 @@ MATHEMATICS = mathematics/ivector2.cpp \
               mathematics/perlin_noise_2D.cpp
 
 THREADING = threading/thread.cpp \
-            threading/worker_pool.cpp
+            threading/worker_pool.cpp \
+            threading/presistent_worker.cpp
 
 SRCS = $(DATA_STRUCTURES) \
        $(DESIGN_PATTERNS) \
