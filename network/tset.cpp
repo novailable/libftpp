@@ -58,11 +58,11 @@ public:
     static std::optional<Message> tryDecode(std::vector<char>& buffer);
 
 private:
-    void readBytes(void* out, std::size_t n) const;
+    void readBytes(void* out, size_t n) const;
 
     Type              _type;
     std::vector<char> _data;
-    mutable std::size_t _readPos = 0;
+    mutable size_t _readPos = 0;
 };
 
 #endif // MESSAGE_HPP
@@ -101,7 +101,7 @@ Message& Message::operator<<(const char* value)
     return *this << std::string(value ? value : "");
 }
 
-void Message::readBytes(void* out, std::size_t n) const
+void Message::readBytes(void* out, size_t n) const
 {
     if (_data.size() - _readPos < n)
         throw std::out_of_range("Message: not enough data to read");
@@ -118,8 +118,8 @@ const Message& Message::operator>>(std::string& value) const
         _readPos -= sizeof(len);   // leave the message unchanged on failure
         throw std::out_of_range("Message: string length exceeds message");
     }
-    value.assign(_data.data() + _readPos, static_cast<std::size_t>(len));
-    _readPos += static_cast<std::size_t>(len);
+    value.assign(_data.data() + _readPos, static_cast<size_t>(len));
+    _readPos += static_cast<size_t>(len);
     return *this;
 }
 

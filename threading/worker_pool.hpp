@@ -33,7 +33,7 @@ class	WorkerPool
 				virtual void	execute() = 0;
 		};
 	
-		WorkerPool(std::size_t threadCount = std::thread::hardware_concurrency());
+		WorkerPool(size_t threadCount = std::thread::hardware_concurrency());
 		~WorkerPool();
 
 		WorkerPool(const WorkerPool&) = delete;
@@ -44,7 +44,7 @@ class	WorkerPool
 		void	addJob(const Job& jobToExecute);
 		void	addJob(std::shared_ptr<IJobs> jobToExecute);
 
-		std::size_t	threadCount() const noexcept;
+		size_t	threadCount() const noexcept;
 };
 
 #endif

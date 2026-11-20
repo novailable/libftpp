@@ -122,7 +122,7 @@ protected:
     std::streamsize xsputn(const char* s, std::streamsize n) override
     {
         std::lock_guard<std::mutex> lk(_m);
-        _data.append(s, static_cast<std::size_t>(n));
+        _data.append(s, static_cast<size_t>(n));
         return n;
     }
 
@@ -148,7 +148,7 @@ static int countOccurrences(const std::string& hay, const std::string& needle)
 {
     int n = 0;
 
-    for (std::size_t p = hay.find(needle);
+    for (size_t p = hay.find(needle);
          p != std::string::npos;
          p = hay.find(needle, p + needle.size()))
         ++n;
@@ -158,15 +158,15 @@ static int countOccurrences(const std::string& hay, const std::string& needle)
 
 static std::string lineContaining(const std::string& text, const std::string& needle)
 {
-    const std::size_t p = text.find(needle);
+    const size_t p = text.find(needle);
 
     if (p == std::string::npos)
         return "";
 
-    std::size_t b = text.rfind('\n', p);
+    size_t b = text.rfind('\n', p);
     b = (b == std::string::npos) ? 0 : b + 1;
 
-    std::size_t e = text.find('\n', p);
+    size_t e = text.find('\n', p);
     if (e == std::string::npos)
         e = text.size();
 
@@ -272,7 +272,7 @@ static void test_tasks_run_in_insertion_order_every_lap()
 
     bool ok = copy.size() >= 300;
 
-    for (std::size_t i = 0; i < 300 && i < copy.size(); ++i)
+    for (size_t i = 0; i < 300 && i < copy.size(); ++i)
         ok = ok && copy[i] == "ABC"[i % 3];
 
     CHECK(ok);

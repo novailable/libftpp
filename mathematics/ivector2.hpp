@@ -4,7 +4,7 @@
 #include <cstddef>
 #include "ivector.hpp"
 
-template<typename TType, std::size_t N = 2>
+template<typename TType, size_t N = 2>
 struct IVector2 : IVector<TType, N, IVector2>
 {
     static_assert(N == 2);

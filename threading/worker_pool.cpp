@@ -1,12 +1,12 @@
 #include "worker_pool.hpp"
 
-WorkerPool::WorkerPool(std::size_t threadCount)
+WorkerPool::WorkerPool(size_t threadCount)
 {
 	threadCount = threadCount == 0 ? 1 : threadCount;
 	try
 	{
 		_workers.reserve(threadCount);
-		for (std::size_t i = 0; i < threadCount; ++i)
+		for (size_t i = 0; i < threadCount; ++i)
 		{
 			_workers.emplace_back([this]{addWorker();});
 		}
@@ -96,7 +96,7 @@ void	WorkerPool::addJob(std::shared_ptr<WorkerPool::IJobs> jobToExecute)
 	addJob(Job([job = std::move(jobToExecute)]{job->execute();}));
 }
 
-std::size_t	WorkerPool::threadCount() const noexcept
+size_t	WorkerPool::threadCount() const noexcept
 {
 	return _workers.size();
 }

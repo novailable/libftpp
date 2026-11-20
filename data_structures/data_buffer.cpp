@@ -1,6 +1,6 @@
 #include "data_buffer.hpp"
 
-void    DataBuffer::write(const void* data, std::size_t size)
+void    DataBuffer::write(const void* data, size_t size)
 {
     if (size == 0)
         return;
@@ -9,7 +9,7 @@ void    DataBuffer::write(const void* data, std::size_t size)
     _bytes.insert(_bytes.end(), bytes, bytes + size);
 }
 
-void    DataBuffer::read(void *dest, std::size_t size)
+void    DataBuffer::read(void *dest, size_t size)
 {
     if (size == 0)
         return ;
@@ -44,7 +44,7 @@ DataBuffer  &DataBuffer::operator>>(std::string &value)
     return *this;
 }
 
-std::size_t DataBuffer::size() const noexcept { return _bytes.size() - _cursor; }
+size_t DataBuffer::size() const noexcept { return _bytes.size() - _cursor; }
 
 bool    DataBuffer::empty() const noexcept { return size() == 0; }
 

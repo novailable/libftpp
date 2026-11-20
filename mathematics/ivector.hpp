@@ -76,8 +76,8 @@
  * @see docs/IVector.md
  */
 
-template<typename TType, std::size_t N,
-	template <typename, std::size_t> typename Derived>
+template<typename TType, size_t N,
+	template <typename, size_t> typename Derived>
 struct	IVector;
 
 namespace	type::detail
@@ -94,8 +94,8 @@ namespace	type
 	inline constexpr bool ivector = detail::is_vector<T>;
 }
 
-template<typename TType, std::size_t N,
-	template <typename, std::size_t> typename Derived>
+template<typename TType, size_t N,
+	template <typename, size_t> typename Derived>
 struct IVector
 {
 	static_assert(N > 0, "IVector needs at least one component");
@@ -135,7 +135,7 @@ struct IVector
 
 		constexpr bool zero_component() const
 		{
-			for (std::size_t i = 0; i < N; ++i)
+			for (size_t i = 0; i < N; ++i)
 				if (_data[i] == TType{})
 					return (true);
 			return (false);
@@ -182,40 +182,40 @@ struct IVector
 		}
 
 		using is_vector_tag = void;
-		static constexpr std::size_t dimension = N;
+		static constexpr size_t dimension = N;
 
 		// --------------------------------------------------------
 		// Access
 		// --------------------------------------------------------
 
-		TType& operator[](std::size_t i)				{ return _data[i]; }
-		const TType& operator[](std::size_t i) const	{ return _data[i]; }
+		TType& operator[](size_t i)				{ return _data[i]; }
+		const TType& operator[](size_t i) const	{ return _data[i]; }
 
-		TType& at(std::size_t i)				{ return _data.at(i); }
-		const TType& at(std::size_t i) const	{ return _data.at(i); }
+		TType& at(size_t i)				{ return _data.at(i); }
+		const TType& at(size_t i) const	{ return _data.at(i); }
 
-		std::size_t size() const	{ return N; }
+		size_t size() const	{ return N; }
 
 		// --------------------------------------------------------
 		// Compound assignment
 		// --------------------------------------------------------
 		constexpr Self& operator+=(const Self& other)
 		{
-			for (std::size_t i = 0; i < N; ++i)
+			for (size_t i = 0; i < N; ++i)
 				_data[i] += other._data[i];
 			return self();
 		}
 
 		constexpr Self& operator-=(const Self& other)
 		{
-			for (std::size_t i = 0; i < N; ++i)
+			for (size_t i = 0; i < N; ++i)
 				_data[i] -= other._data[i];
 			return self();
 		}
 
 		constexpr Self& operator*=(const Self& other)
 		{
-			for (std::size_t i = 0; i < N; ++i)
+			for (size_t i = 0; i < N; ++i)
 				_data[i] *= other._data[i];
 			return self();
 		}
@@ -225,7 +225,7 @@ struct IVector
 			if (other.zero_component())
 				error(error_type::zero_division);
 
-			for (std::size_t i = 0; i < N; ++i)
+			for (size_t i = 0; i < N; ++i)
 				_data[i] /= other._data[i];
 			return self();
 		}
@@ -271,7 +271,7 @@ struct IVector
 				&& requires(TType& t, const Scalar& s) { t += s; }
 		constexpr Self& operator+=(const Scalar& scalar)
 		{
-			for (std::size_t i = 0; i < N; ++i)
+			for (size_t i = 0; i < N; ++i)
 				_data[i] += scalar;
 			return self();
 		}
@@ -281,7 +281,7 @@ struct IVector
 				&& requires(TType& t, const Scalar& s) { t -= s; }
 		constexpr Self& operator-=(const Scalar& scalar)
 		{
-			for (std::size_t i = 0; i < N; ++i)
+			for (size_t i = 0; i < N; ++i)
 				_data[i] -= scalar;
 			return self();
 		}
@@ -291,7 +291,7 @@ struct IVector
 				&& requires(TType& t, const Scalar& s) { t *= s; }
 		constexpr Self& operator*=(const Scalar& scalar)
 		{
-			for (std::size_t i = 0; i < N; ++i)
+			for (size_t i = 0; i < N; ++i)
 				_data[i] *= scalar;
 			return self();
 		}
@@ -306,7 +306,7 @@ struct IVector
 		{
 			if (scalar == Scalar{})
 				error(error_type::zero_division);
-			for (std::size_t i = 0; i < N; ++i)
+			for (size_t i = 0; i < N; ++i)
 				_data[i] /= scalar;
 			return self();
 		}
@@ -328,7 +328,7 @@ struct IVector
 
 			Rebind<ResultType> result;
 
-			for (std::size_t i = 0; i < N; ++i)
+			for (size_t i = 0; i < N; ++i)
 				result[i] = _data[i] + scalar;
 
 			return result;
@@ -345,7 +345,7 @@ struct IVector
 
 			Rebind<ResultType> result;
 
-			for (std::size_t i = 0; i < N; ++i)
+			for (size_t i = 0; i < N; ++i)
 				result[i] = _data[i] - scalar;
 
 			return result;
@@ -362,7 +362,7 @@ struct IVector
 
 			Rebind<ResultType> result;
 
-			for (std::size_t i = 0; i < N; ++i)
+			for (size_t i = 0; i < N; ++i)
 				result[i] = _data[i] * scalar;
 
 			return result;
@@ -385,7 +385,7 @@ struct IVector
 
 			Rebind<ResultType> result;
 
-			for (std::size_t i = 0; i < N; ++i)
+			for (size_t i = 0; i < N; ++i)
 				result[i] = _data[i] / scalar;
 
 			return result;
@@ -405,7 +405,7 @@ struct IVector
 		{
 			ProductType sum{};
 
-			for (std::size_t i = 0; i < N; ++i)
+			for (size_t i = 0; i < N; ++i)
 				sum += _data[i] * other._data[i];
 
 			return sum;
@@ -440,7 +440,7 @@ struct IVector
 			Rebind<ResultType>	result{};
 
 			if (len != len_type{})
-				for (std::size_t i = 0; i < N; ++i)
+				for (size_t i = 0; i < N; ++i)
 					result[i] = _data[i] / len;
 			return result;
 		}
@@ -484,14 +484,14 @@ struct IVector
 
 		constexpr auto cross(const Self& other) const requires (N == 7)
 		{
-			auto	w = [&](std::size_t i, std::size_t j) {
+			auto	w = [&](size_t i, size_t j) {
 				return _data[i % 7] * other._data[j % 7]
 					- _data[j % 7] * other._data[i % 7];
 			};
 
 			Rebind<CrossType>	result;
 
-			for (std::size_t k = 0; k < 7; ++k)
+			for (size_t k = 0; k < 7; ++k)
 				result[k] = w(k + 1, k + 3) + w(k + 2, k + 6) + w(k + 4, k + 5);
 
 			return result;
@@ -506,14 +506,14 @@ struct IVector
 
 		constexpr auto wedge(const Self& other) const requires (N >= 2)
 		{
-			constexpr std::size_t Count = N * (N - 1) / 2;
+			constexpr size_t Count = N * (N - 1) / 2;
 
 			Derived<CrossType, Count> result{};
 
-			std::size_t k = 0;
+			size_t k = 0;
 
-			for (std::size_t i = 0; i < N; ++i)
-				for (std::size_t j = i + 1; j < N; ++j)
+			for (size_t i = 0; i < N; ++i)
+				for (size_t j = i + 1; j < N; ++j)
 					result[k++] = _data[i] * other._data[j]
 								- _data[j] * other._data[i];
 
@@ -527,8 +527,8 @@ struct IVector
 // 3 * vector
 // ============================================================
 
-template<typename Scalar, typename TType, std::size_t N,
-	template <typename, std::size_t> typename Derived>
+template<typename Scalar, typename TType, size_t N,
+	template <typename, size_t> typename Derived>
 	requires (!type::ivector<Scalar>)
 		&& requires(const TType& t, const Scalar& s) { t * s; }
 constexpr auto operator*(const Scalar& scalar, const IVector<TType, N, Derived>& vector)

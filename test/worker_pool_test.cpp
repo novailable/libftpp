@@ -155,7 +155,7 @@ static void test_single_worker_runs_jobs_in_fifo_order()
 
     bool sorted = order.size() == 200;
 
-    for (std::size_t i = 0; i < order.size(); ++i)
+    for (size_t i = 0; i < order.size(); ++i)
         sorted = sorted && order[i] == static_cast<int>(i);
 
     CHECK(sorted);
@@ -185,7 +185,7 @@ protected:
     std::streamsize xsputn(const char* s, std::streamsize n) override
     {
         std::lock_guard<std::mutex> lk(_m);
-        _data.append(s, static_cast<std::size_t>(n));
+        _data.append(s, static_cast<size_t>(n));
         return n;
     }
 

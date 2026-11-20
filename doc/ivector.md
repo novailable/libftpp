@@ -18,7 +18,7 @@ Vector-vector arithmetic returns the derived vector type. Scalar arithmetic can 
 |---|---|
 | `TType` | Component type, such as `int`, `float`, `double`, or a compatible custom numeric type. |
 | `N` | Number of components. Must be greater than zero. |
-| `Derived` | Derived class template accepting `<typename, std::size_t>`. Used to preserve the derived type in operations and to rebind the component type or dimension. |
+| `Derived` | Derived class template accepting `<typename, size_t>`. Used to preserve the derived type in operations and to rebind the component type or dimension. |
 
 For example, `Derived<double, 3>` is the same derived vector template with `double` components and three components.
 
@@ -39,7 +39,7 @@ Not every operation needs every capability. A type that is only stored and acces
 A derived class passes itself as the third template argument.
 
 ```cpp
-template<typename TType, std::size_t N = 2>
+template<typename TType, size_t N = 2>
 struct IVector2 : IVector<TType, N, IVector2>
 {
     static_assert(N == 2);

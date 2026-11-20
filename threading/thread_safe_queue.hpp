@@ -64,7 +64,7 @@ class	ThreadSafeQueue
 			return	data;
 		}
 
-		std::size_t	size() const noexcept
+		size_t	size() const noexcept
 		{
 			std::lock_guard<std::mutex>	lock(_mutex);
 			return	_container.size();

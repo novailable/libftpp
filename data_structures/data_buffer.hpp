@@ -19,10 +19,10 @@ class   DataBuffer
 {
     private:
         std::vector<std::byte>  _bytes;
-        std::size_t             _cursor = 0;
+        size_t             _cursor = 0;
 
-        void    write(const void* data, std::size_t size);
-        void    read(void *dest, std::size_t size);
+        void    write(const void* data, size_t size);
+        void    read(void *dest, size_t size);
         
 
     public:
@@ -49,7 +49,7 @@ class   DataBuffer
         DataBuffer  &operator<<(const std::string &value);
         DataBuffer  &operator>>(std::string &value);
 
-        std::size_t size() const noexcept;
+        size_t size() const noexcept;
         bool        empty() const noexcept;
         void        reset() noexcept;
         void        rewind() noexcept;
