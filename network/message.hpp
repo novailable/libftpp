@@ -5,6 +5,11 @@
 #include <vector>
 #include <cstring>
 #include <optional>
+#include <cstdint>
+#include <typeinfo>
+#include <utility>
+#include <cstddef>
+#include <arpa/inet.h>
 
 namespace   message_detail
 {
@@ -37,20 +42,24 @@ class   Message
 {
     public:
         using Type = int;
-        static constexpr std::uint32_t  MaxSize = 64u * 1024u * 1024u;
+        static constexpr std::uint32_t  maxSize = 64u * 1024u * 1024u;
 
     private:
         Type    _type;
         std::vector<char>   _data;
         mutable size_t _readPos = 0;
-
+     
         size_t  remaining() const;
         void    readBytes(void* out, size_t n) const;
 
+
     public:
-        Message() = delete;
-        explicit Message(int type);
+        Message();
+        Message(int type);
         int    type() const;
+        
+        std::vector<char>   encode() const;
+        static std::optional<Message>   decode(std::vector<char>& buffer);
 
         template <typename T>
         Message&    operator<<(const T& data)
@@ -84,7 +93,7 @@ class   Message
         }
 
         template <typename T>
-        Message&    operator>>(T& data)
+        const Message&    operator>>(T& data) const
         {
             static_assert(!std::is_array_v<T> && !std::is_pointer_v<T>,
                             "Message: arrays and pointers cannot be deserialized");
@@ -95,6 +104,8 @@ class   Message
                 const size_t    start = _readPos;
                 try
                 {
+                    T   temp;
+
                     std::uint64_t count = 0;
                     *this >> count;
                     if (count > remaining())
@@ -105,8 +116,8 @@ class   Message
                     {
                         if (count > remaining() / sizeof(Element))
                             throw   std::out_of_range("Message: sequence length exceeds message");
-                        data.resize(static_cast<std::size_t>(count));
-                        readBytes(data.data(), static_cast<std::size_t>(count) * sizeof(Element));
+                        temp.resize(static_cast<std::size_t>(count));
+                        readBytes(temp.data(), static_cast<std::size_t>(count) * sizeof(Element));
                     }
                     else
                     {
@@ -114,9 +125,10 @@ class   Message
                         {
                             Element    element;
                             *this >> element;
-                            data.push_back(std::move(element));
+                            temp.push_back(std::move(element));
                         }
                     }
+                    data = std::move(temp);
                 }
                 catch(...)
                 {
@@ -128,11 +140,56 @@ class   Message
                 static_assert(message_detail::always_false<T>::value,
                             "Message: type is not compatiable");
             return *this;
-        }
+        }       
 
-        std::vector<char>   encode() const;
-        static std::optional<Message>   decode(std::vector<char>& buffer);
-        
+        // template <typename T>
+        // const Message&    operator>>(T& data) const
+        // {
+        //     static_assert(!std::is_array_v<T> && !std::is_pointer_v<T>,
+        //                     "Message: arrays and pointers cannot be deserialized");
+        //     if constexpr (std::is_trivially_copyable_v<T>)
+        //         readBytes(&data, sizeof(T));
+        //     else if constexpr (message_detail::is_sequence<T>::value)
+        //     {
+        //         const size_t    start = _readPos;
+        //         try
+        //         {
+        //             std::uint64_t count = 0;
+        //             *this >> count;
+        //             if (count > remaining())
+        //                 throw   std::out_of_range("Message: sequence length exceeds message");
+        //             data.clear();
+        //             using Element = typename T::value_type;
+        //             if constexpr (message_detail::is_bulk<T>::value)
+        //             {
+        //                 if (count > remaining() / sizeof(Element))
+        //                     throw   std::out_of_range("Message: sequence length exceeds message");
+        //                 data.resize(static_cast<std::size_t>(count));
+        //                 readBytes(data.data(), static_cast<std::size_t>(count) * sizeof(Element));
+        //             }
+        //             else
+        //             {
+        //                 for (uint64_t i = 0; i < count; ++i)
+        //                 {
+        //                     Element    element;
+        //                     *this >> element;
+        //                     data.push_back(std::move(element));
+        //                 }
+        //             }
+        //         }
+        //         catch(...)
+        //         {
+        //             _readPos = start;
+        //             throw ;
+        //         }
+        //     }
+        //     else
+        //         static_assert(message_detail::always_false<T>::value,
+        //                     "Message: type is not compatiable");
+        //     return *this;
+        // }       
+
+
 };
 
 #endif

@@ -7,7 +7,8 @@ INCLUDES = -I.. \
            -I../design_patterns \
            -I../iostream \
            -I../mathematics \
-           -I../threading
+           -I../threading \
+		   -I../network
 
 CXXFLAGS = $(INCLUDES) -Wall -Wextra -Werror -std=c++20 -pthread
 
@@ -26,13 +27,15 @@ LIB_SRCS = ../data_structures/data_buffer.cpp \
            ../mathematics/perlin_noise_2D.cpp \
            ../threading/thread.cpp \
            ../threading/worker_pool.cpp \
-		   ../threading/presistent_worker.cpp
+		   ../threading/presistent_worker.cpp \
+		   ../network/message.cpp
 
 TESTS = thread_safe_iostream_test \
         thread_safe_queue_test \
         thread_test \
 		worker_pool_test \
-		presistent_worker_test
+		presistent_worker_test \
+		message_test
 
 BUILD_DIR = build
 

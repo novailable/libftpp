@@ -1,11 +1,10 @@
 #include "client.hpp"
 
-Client::Client() : _fd(-1) 
-{}
+Client::Client() {}
 
 Client::~Client()
 {
-
+    disconnect();
 }
 
 void    Client::connect(const std::string& address, const size_t& port)
@@ -20,29 +19,28 @@ void    Client::connect(const std::string& address, const size_t& port)
     if (status != 0)
         throw   std::runtime_error("Client: cannot resolve " + address + ": " + ::gai_strerror(status));
     
-    int fd = -1;
     for (addrinfo* info = result; info; info = info->ai_next)
     {
-        fd = ::socket(info->ai_family, info->ai_socktype, info->ai_protocol);
-        if (fd < 0)
+        _fd = ::socket(info->ai_family, info->ai_socktype, info->ai_protocol);
+        if (_fd < 0)
             continue ;
-        if (::connect(fd, info->ai_addr, info->ai_addrlen) == 0)
+        if (::connect(_fd, info->ai_addr, info->ai_addrlen) == 0)
             break ;
-        ::close(fd);
-        fd = -1;
+        _fd.close();
     }
     ::freeaddrinfo(result);
 
-    if (fd < 0)
+    if (_fd < 0)
         throw   std::runtime_error("Client: cannot connect to " + address + ":" + std::to_string(port));
     
-    ::fcntl(fd, F_SETFL, fcntl(fd, F_GETFL, 0) | O_NONBLOCK);
-    _fd = fd;
+    _fd.setNBlock();
+    _inbox.clear();
 }
 
 void    Client::disconnect()
 {
-
+    _fd.close();
+    _inbox.clear();
 }
 
 void    Client::defineAction(const Message::Type& messageType, 
@@ -51,9 +49,40 @@ void    Client::defineAction(const Message::Type& messageType,
     _actions[messageType] = action;
 }
 
+bool    Client::sendAll(const std::vector<char>& data)
+{
+    std::size_t sent = 0;
+    while (sent < data.size())
+    {
+        const ssize_t count = ::send(_fd, data.data() + sent, data.size() - sent, MSG_NOSIGNAL);
+        if (count > 0)
+        {
+            sent += static_cast<std::size_t>(count);
+            continue ;
+        }
+        if (count < 0 && errno == EINTR)
+            continue ;
+        if (count < 0 && (errno == EAGAIN || errno == EWOULDBLOCK))
+        {
+            pollfd  poll_fd{_fd, POLLOUT, 0};
+            if (::poll(&poll_fd, 1, 5000) <= 0)
+                return false;
+            continue ;
+        }
+        return false;
+    }
+    return true;
+}
+ 
 void    Client::send(const Message& message)
 {
-
+    if (_fd < 0)
+        throw std::runtime_error("Client: not connected");
+    
+    if (!sendAll(message.encode()))
+    {
+        disconnect();
+    }
 }
 
 void    Client::update()
@@ -86,6 +115,21 @@ void    Client::update()
     std::vector<Message>    received;
     try
     {
-        while ()
+        while (auto msg = Message::decode(_inbox))
+            received.push_back(std::move(*msg));
     }
+    catch (const std::runtime_error&)
+    {
+        close = true;
+    }
+
+    for (const Message& msg : received)
+    {
+        auto it = _actions.find(msg.type());
+        if (it != _actions.end() && it->second)
+            it->second(msg);
+    }
+
+    if (close)
+        disconnect();
 }

@@ -6,7 +6,7 @@
 #    By: aoo <aoo@student.42.fr>                    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2025/03/19 23:28:02 by aoo               #+#    #+#              #
-#    Updated: 2026/11/19 09:57:58 by aoo              ###   ########.fr        #
+#    Updated: 2026/11/24 22:58:00 by aoo              ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -21,7 +21,8 @@ INCLUDES = -Idata_structures \
            -Idesign_patterns \
            -Iiostream \
            -Imathematics \
-           -Ithreading
+           -Ithreading \
+           -Inetwork
 
 CXXFLAGS = $(INCLUDES) -Wall -Wextra -Werror -std=c++20 -pthread
 
@@ -40,11 +41,17 @@ THREADING = threading/thread.cpp \
             threading/worker_pool.cpp \
             threading/presistent_worker.cpp
 
+NETWORK = network/message.cpp \
+          network/fd.cpp \
+          network/client.cpp \
+          network/server.cpp
+
 SRCS = $(DATA_STRUCTURES) \
        $(DESIGN_PATTERNS) \
        $(IOSTREAM) \
        $(MATHEMATICS) \
-       $(THREADING)
+       $(THREADING) \
+       $(NETWORK)
 
 OBJS = $(SRCS:.cpp=.o)
 
