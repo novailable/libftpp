@@ -2,10 +2,12 @@
 #define DATA_BUFFER_HPP
 
 #include <cstddef>
+#include <cstdint>
 #include <vector>
 #include <iostream>
 #include <type_traits>
 #include <cstring>
+#include <utility>
 
 #define COPY_ASSERT(TType) \
     static_assert(std::is_trivially_copyable_v<TType>, \

@@ -24,9 +24,9 @@ class   Singleton
         }
 
         template<typename... TArgs>
-        void    instantiate(TArgs&&... p_args)
+        static void    instantiate(TArgs&&... p_args)
         {
-            if (instance)
+            if (_instance)
                 throw   std::runtime_error("Singleton: instance is already instantiated");
             _instance.reset(new TType(std::forward<TArgs>(p_args)...));
 

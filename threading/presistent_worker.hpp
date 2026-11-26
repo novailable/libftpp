@@ -5,6 +5,7 @@
 #include <vector>
 #include <functional>
 #include <memory>
+#include <algorithm>
 
 #include "thread_safe_iostream.hpp"
 
