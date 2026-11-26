@@ -2,6 +2,9 @@
 #define MESSAGE_HPP
 
 #include <stdexcept>
+#include <type_traits>
+#include <string>
+#include <iterator>
 #include <vector>
 #include <cstring>
 #include <optional>
@@ -28,14 +31,17 @@ namespace   message_detail
         : std::true_type {};
 
     template <typename T, typename = void>
-    struct  is_bulk : std::false_type {};
+    struct is_bulk : std::false_type {};
+
+    template <>
+    struct is_bulk<std::vector<bool>, void> : std::false_type {};
 
     template <typename T>
-    struct  is_bulk<T, std::void_t<
+    struct is_bulk<T, std::void_t<
         typename T::value_type,
         decltype(std::declval<const T&>().data()),
-        decltype(std::declval<T&>().resize(0)) >>
-        : std::is_trivially_copyable<typename T::value_type> {};
+        decltype(std::declval<T&>().resize(0))
+    >> : std::is_trivially_copyable<typename T::value_type> {};
 }
 
 class   Message
@@ -80,8 +86,11 @@ class   Message
 
                 if constexpr (message_detail::is_bulk<T>::value)
                 {
-                    const char* pos = reinterpret_cast<const char*>(&data);
-                    _data.insert(_data.end(), pos, pos + static_cast<size_t> (count) * sizeof(Element));
+                    if (count != 0)
+                    {
+                        const char* pos = reinterpret_cast<const char*>(data.data());
+                        _data.insert(_data.end(), pos, pos + static_cast<size_t> (count) * sizeof(Element));
+                    }
                 }
                 else
                     for (const Element& element : data)
@@ -110,14 +119,15 @@ class   Message
                     *this >> count;
                     if (count > remaining())
                         throw   std::out_of_range("Message: sequence length exceeds message");
-                    data.clear();
+                    // data.clear();
                     using Element = typename T::value_type;
                     if constexpr (message_detail::is_bulk<T>::value)
                     {
                         if (count > remaining() / sizeof(Element))
                             throw   std::out_of_range("Message: sequence length exceeds message");
                         temp.resize(static_cast<std::size_t>(count));
-                        readBytes(temp.data(), static_cast<std::size_t>(count) * sizeof(Element));
+                        if (count != 0)
+                            readBytes(temp.data(), static_cast<std::size_t>(count) * sizeof(Element));
                     }
                     else
                     {
@@ -140,56 +150,7 @@ class   Message
                 static_assert(message_detail::always_false<T>::value,
                             "Message: type is not compatiable");
             return *this;
-        }       
-
-        // template <typename T>
-        // const Message&    operator>>(T& data) const
-        // {
-        //     static_assert(!std::is_array_v<T> && !std::is_pointer_v<T>,
-        //                     "Message: arrays and pointers cannot be deserialized");
-        //     if constexpr (std::is_trivially_copyable_v<T>)
-        //         readBytes(&data, sizeof(T));
-        //     else if constexpr (message_detail::is_sequence<T>::value)
-        //     {
-        //         const size_t    start = _readPos;
-        //         try
-        //         {
-        //             std::uint64_t count = 0;
-        //             *this >> count;
-        //             if (count > remaining())
-        //                 throw   std::out_of_range("Message: sequence length exceeds message");
-        //             data.clear();
-        //             using Element = typename T::value_type;
-        //             if constexpr (message_detail::is_bulk<T>::value)
-        //             {
-        //                 if (count > remaining() / sizeof(Element))
-        //                     throw   std::out_of_range("Message: sequence length exceeds message");
-        //                 data.resize(static_cast<std::size_t>(count));
-        //                 readBytes(data.data(), static_cast<std::size_t>(count) * sizeof(Element));
-        //             }
-        //             else
-        //             {
-        //                 for (uint64_t i = 0; i < count; ++i)
-        //                 {
-        //                     Element    element;
-        //                     *this >> element;
-        //                     data.push_back(std::move(element));
-        //                 }
-        //             }
-        //         }
-        //         catch(...)
-        //         {
-        //             _readPos = start;
-        //             throw ;
-        //         }
-        //     }
-        //     else
-        //         static_assert(message_detail::always_false<T>::value,
-        //                     "Message: type is not compatiable");
-        //     return *this;
-        // }       
-
-
+        }
 };
 
 #endif

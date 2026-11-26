@@ -6,7 +6,7 @@
 #    By: aoo <aoo@student.42.fr>                    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2025/03/19 23:28:02 by aoo               #+#    #+#              #
-#    Updated: 2026/11/24 22:58:00 by aoo              ###   ########.fr        #
+#    Updated: 2026/11/26 17:57:32 by aoo              ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -39,7 +39,7 @@ MATHEMATICS = mathematics/ivector2.cpp \
 
 THREADING = threading/thread.cpp \
             threading/worker_pool.cpp \
-            threading/presistent_worker.cpp
+            threading/persistent_worker.cpp
 
 NETWORK = network/message.cpp \
           network/fd.cpp \

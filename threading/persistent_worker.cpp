@@ -1,19 +1,19 @@
-#include "presistent_worker.hpp"
+#include "persistent_worker.hpp"
 
-PresistentWorker::PresistentWorker() 
+PersistentWorker::PersistentWorker() 
     :   _running{true},
         _tasks{std::make_shared<const Tasks>()},
-        _worker(&PresistentWorker::workerJob, this)
+        _worker(&PersistentWorker::workerJob, this)
 {
-    threadSafeCerr.setPrefix("PresistentWorker::");
+    threadSafeCerr.setPrefix("PersistentWorker::");
 }
 
-PresistentWorker::~PresistentWorker()
+PersistentWorker::~PersistentWorker()
 {
     shutdown();
 }
 
-void    PresistentWorker::shutdown()
+void    PersistentWorker::shutdown()
 {
     _running.store(false, std::memory_order_release);
     _tasks.store(std::make_shared<const Tasks>(), std::memory_order_release);
@@ -22,14 +22,14 @@ void    PresistentWorker::shutdown()
         _worker.join();
 }
 
-PresistentWorker::Tasks::iterator   PresistentWorker::find(std::shared_ptr<Tasks> tasks, const std::string& name)
+PersistentWorker::Tasks::iterator   PersistentWorker::find(std::shared_ptr<Tasks> tasks, const std::string& name)
 {
     return  std::find_if(tasks->begin(), tasks->end(), [&](const task_t& task) {
         return task.name == name;
     });
 }
 
-void    PresistentWorker::workerJob()
+void    PersistentWorker::workerJob()
 {
     while (_running.load(std::memory_order_acquire))
     {
@@ -65,7 +65,7 @@ void    PresistentWorker::workerJob()
     }
 }
 
-void    PresistentWorker::addTask(const std::string& name, const Job& jobToExecute)
+void    PersistentWorker::addTask(const std::string& name, const Job& jobToExecute)
 {
     if (name.empty())
     {
@@ -93,7 +93,7 @@ void    PresistentWorker::addTask(const std::string& name, const Job& jobToExecu
 
 }
 
-void    PresistentWorker::removeTask(const std::string& name)
+void    PersistentWorker::removeTask(const std::string& name)
 {
     auto    old_tasks = _tasks.load(std::memory_order_acquire);
     std::shared_ptr<const Tasks>    new_tasks;

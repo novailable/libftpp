@@ -6,7 +6,10 @@ Message::Message(int type) : _type(type) {};
 
 int     Message::type() const { return (_type); }
 
-size_t  Message::remaining() const { return _data.size() - _readPos; }
+size_t  Message::remaining() const 
+{
+    return (_readPos <= _data.size() ? _data.size() - _readPos : 0);
+}
 
 void    Message::readBytes(void *out, size_t num) const
 {
@@ -20,6 +23,9 @@ void    Message::readBytes(void *out, size_t num) const
 
 std::vector<char>   Message::encode() const
 {
+    if (_data.size() > static_cast<size_t>(UINT32_MAX) - sizeof(std::int32_t))
+        throw std::length_error("Message: payload exceeds wire format limit");
+
     const std::uint32_t len = htonl(static_cast<std::uint32_t>(sizeof(std::int32_t) + _data.size()));
     const std::uint32_t type = htonl(static_cast<std::uint32_t>(_type));
 

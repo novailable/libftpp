@@ -38,7 +38,7 @@ int main() {
 
 	while (!quit)
 	{
-		server.update();
+		client.update();
 
 		threadSafeCout << "Server updated." << std::endl;
 		threadSafeCout << "Available operations :" << std::endl;

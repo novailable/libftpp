@@ -1,15 +1,17 @@
-#ifndef PRESISTENT_WORKER_HPP
-#define PRESISTENT_WORKER_HPP
+#ifndef PERSISTENT_WORKER_HPP
+#define PERSISTENT_WORKER_HPP
 
 #include <thread>
 #include <vector>
 #include <functional>
 #include <memory>
 #include <algorithm>
+#include <exception>
+#include <utility>
 
 #include "thread_safe_iostream.hpp"
 
-class   PresistentWorker
+class   PersistentWorker
 {
     private:
         using   Job = std::function<void()>;
@@ -30,13 +32,13 @@ class   PresistentWorker
         Tasks::iterator find(std::shared_ptr<Tasks> tasks, const std::string &name);
     
     public:
-        PresistentWorker();
-        ~PresistentWorker();
+        PersistentWorker();
+        ~PersistentWorker();
 
-        PresistentWorker(const PresistentWorker&) = delete;
-        PresistentWorker&   operator=(const PresistentWorker&) = delete;
-        PresistentWorker(PresistentWorker&&) = delete;
-        PresistentWorker&   operator=(const PresistentWorker&&) = delete;
+        PersistentWorker(const PersistentWorker&) = delete;
+        PersistentWorker&   operator=(const PersistentWorker&) = delete;
+        PersistentWorker(PersistentWorker&&) = delete;
+        PersistentWorker&   operator=(const PersistentWorker&&) = delete;
 
         void    addTask(const std::string& name, const Job& jobToExecute);
         void    removeTask(const std::string& name);

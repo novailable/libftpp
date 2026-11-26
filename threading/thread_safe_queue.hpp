@@ -5,6 +5,7 @@
 #include <deque>
 #include <mutex>
 #include <stdexcept>
+#include <utility>
 
 template <typename TType>
 class	ThreadSafeQueue

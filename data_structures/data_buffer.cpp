@@ -23,7 +23,6 @@ void    DataBuffer::read(void *dest, size_t size)
 
 DataBuffer  &DataBuffer::operator<<(const std::string &value)
 {
-
     *this << static_cast<std::uint64_t>(value.size());
     write(value.data(), value.size());
     return *this;
@@ -31,16 +30,31 @@ DataBuffer  &DataBuffer::operator<<(const std::string &value)
 
 DataBuffer  &DataBuffer::operator>>(std::string &value)
 {
-    std::uint64_t   length = 0;
-    *this >> length;
+    const size_t    start = _cursor;
 
-    if (length > _bytes.size() - _cursor)
-        throw   std::out_of_range("DataBuffer: not enough data to read string");
+    try
+    {
+        std::uint64_t   length = 0;
+        *this >> length;
+
+        if (length > _bytes.size() - _cursor)
+            throw   std::out_of_range("DataBuffer: not enough data to read string");
+        
+        std::string temp;
+        if (length != 0)
+        {
+            temp.assign(reinterpret_cast<const char*>(_bytes.data() + _cursor), 
+                        static_cast<size_t>(length));            
+            _cursor += static_cast<size_t>(length);
+            value = std::move(temp);
+        }
+    }
+    catch(...)
+    {
+        _cursor = start;
+        throw;
+    }
     
-    value.assign(reinterpret_cast<const char*>(_bytes.data() + _cursor),
-                static_cast<size_t>(length));
-    
-    _cursor += static_cast<size_t>(length);
     return *this;
 }
 

@@ -4,7 +4,6 @@
 enum class State {
     Idle,
     Running,
-	Acclearting,
     Paused,
     Stopped
 };
@@ -51,25 +50,6 @@ int main() {
     } catch (const std::invalid_argument& e) {
         std::cout << "Exception caught: " << e.what() << std::endl;  // Handle state not found
     }
-
-	try
-	{
-		sm.remove(State::Stopped);
-		std::cout << "Stop removed" << std::endl;
-		sm.addState(State::Acclearting);
-		sm.addAction(State::Acclearting, []{ std::cout << "System is accelarting"; });
-		sm.addTransition(State::Running, State::Acclearting, []{ std::cout << "Transitioning from Running to Acclearting." << std::endl; });
-		sm.update();
-		sm.transitionTo(State::Acclearting);
-		sm.addState(State::Stopped);
-		sm.addAction(State::Stopped, []{ std::cout << "System is stopped"; });
-		sm.addAction(State::Stopped, []{ std::cout << "System is still stopped"; });
-		sm.update();
-	}
-	catch (const std::invalid_argument& e)
-	{
-		std::cout << "Exception caught" << e.what() << std::endl;
-	}
 
     return 0;
 }
